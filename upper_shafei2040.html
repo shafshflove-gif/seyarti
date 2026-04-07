@@ -199,8 +199,7 @@ header p{color:#a8c4e0;font-size:.75rem;margin-top:2px}
     <div class="pop-summary" id="popSummary"></div>
     <div class="student-list" id="studentList"></div>
     <div class="export-bar">
-      <button class="exp-btn exp-excel" id="btnExcel">📊 Excel</button>
-      <button class="exp-btn exp-wa" id="btnWA">💬 واتساب</button>
+      <button class="exp-btn exp-wa" id="btnWA" style="width:100%">💬 إرسال عبر واتساب</button>
     </div>
     <div class="popup-foot">
       <button class="btn-del-p" onclick="actionBarDelete()">🗑️ حذف</button>
@@ -393,14 +392,16 @@ window.toggleStage=function(bodyId,arrId){
 
 // POPUP
 window.openPopup=function(sid,k){
-  const sg=SM.find(s=>s.id===sid);
-  curPopup={sg,k,dayIdx:new Date().getDay()===0?0:Math.min(new Date().getDay()-0,4)};
-  selStudent=null;
-  document.getElementById('popTitle').textContent=`${sg.name} — ${sg.cls[parseInt(k.slice(1))]}`;
-  renderWeekBar();renderPopupList();renderPopSummary();
-  document.getElementById('btnExcel').onclick=()=>exportExcel(sg,k);
-  document.getElementById('btnWA').onclick=()=>exportWA(sg,k);
-  document.getElementById('popOverlay').classList.add('show');
+  try{
+    const sg=SM.find(s=>s.id===sid);
+    const today=new Date().getDay();
+    curPopup={sg,k,dayIdx:today===0?0:Math.min(today,4)};
+    selStudent=null;
+    document.getElementById('popTitle').textContent=`${sg.name} — ${sg.cls[parseInt(k.slice(1))]}`;
+    renderWeekBar();renderPopupList();renderPopSummary();
+    document.getElementById('btnWA').onclick=()=>exportWA(sg,k);
+    document.getElementById('popOverlay').classList.add('show');
+  }catch(e){console.error(e);showT('حاول مجدداً');}
 };
 
 window.closePopup=function(){document.getElementById('popOverlay').classList.remove('show');curPopup={sg:null,k:null,dayIdx:0};selStudent=null;};
