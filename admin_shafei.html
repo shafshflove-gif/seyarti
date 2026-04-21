@@ -60,6 +60,14 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .week-export-btn{display:flex;gap:8px;align-items:center;}
 .not-reported{color:#f4a261;font-size:.78rem;font-style:italic;padding:4px 10px;}
+
+@media print {
+  header, .top-bar, .week-nav, .day-tabs, .day-summary, .toast { display: none !important; }
+  .section-card { page-break-inside: avoid; margin-bottom: 20px; box-shadow: none; border: 1px solid #ddd; }
+  .cls-block { page-break-inside: avoid; }
+  body { padding: 0; background: #fff; }
+  .main { padding: 10px; }
+}
 </style>
 </head>
 <body>
@@ -190,17 +198,24 @@ async function loadDayData(date){
   const dk=dateKey(date);
   if(allData[dk])return allData[dk];
   try{
-    const [lSnap,uSnap,lNoSnap,uNoSnap]=await Promise.all([
+    const [lSnap,uSnap,lNoSnap,uNoSnap,lRepSnap,uRepSnap]=await Promise.all([
       get(ref(db,lowerKey(date))),
       get(ref(db,upperKey(date))),
       get(ref(db,`lower_no_absent_${dk}`)),
-      get(ref(db,`upper_no_absent_${dk}`))
+      get(ref(db,`upper_no_absent_${dk}`)),
+      get(ref(db,`daily_report_lower_${dk}`)),
+      get(ref(db,`daily_report_upper_${dk}`))
     ]);
+    // الأولوية للكشف المرسل من كبير المعلمين
+    const lATT=lRepSnap.exists()&&lRepSnap.val().ATT?lRepSnap.val().ATT:(lSnap.exists()?lSnap.val():{});
+    const uATT=uRepSnap.exists()&&uRepSnap.val().ATT?uRepSnap.val().ATT:(uSnap.exists()?uSnap.val():{});
+    const lST=lRepSnap.exists()&&lRepSnap.val().ST?lRepSnap.val().ST:ST_LOWER;
+    const uST=uRepSnap.exists()&&uRepSnap.val().ST?uRepSnap.val().ST:ST_UPPER;
     allData[dk]={
-      lower:{ATT:lSnap.exists()?lSnap.val():{},noAbsent:lNoSnap.exists()?lNoSnap.val():{}},
-      upper:{ATT:uSnap.exists()?uSnap.val():{},noAbsent:uNoSnap.exists()?uNoSnap.val():{}}
+      lower:{ATT:lATT,ST:lST,noAbsent:lNoSnap.exists()?lNoSnap.val():{},sent:lRepSnap.exists()},
+      upper:{ATT:uATT,ST:uST,noAbsent:uNoSnap.exists()?uNoSnap.val():{},sent:uRepSnap.exists()}
     };
-  }catch(e){allData[dk]={lower:{ATT:{},noAbsent:{}},upper:{ATT:{},noAbsent:{}}};}
+  }catch(e){allData[dk]={lower:{ATT:{},ST:ST_LOWER,noAbsent:{},sent:false},upper:{ATT:{},ST:ST_UPPER,noAbsent:{},sent:false}};}
   return allData[dk];
 }
 
@@ -272,6 +287,10 @@ function renderDayTabs(){
     tabs.appendChild(btn);
   });
 }
+
+window.printWeek=function(){
+  window.print();
+};
 
 function renderDay(idx){
   const date=weekDays[idx];
