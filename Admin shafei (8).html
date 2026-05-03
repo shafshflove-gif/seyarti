@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الغياب – المسؤول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Tajawal',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh;}
+header{background:linear-gradient(120deg,#1a1a2e,#0f3460);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+header h1{color:#fff;font-size:1.3rem;font-weight:900;}
+header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
+.hd{background:rgba(255,255,255,.12);color:#ffd166;font-size:.78rem;font-weight:700;padding:3px 14px;border-radius:20px;}
+.top-bar{display:flex;gap:8px;padding:12px 16px;background:#fff;border-bottom:1.5px solid #eee;flex-wrap:wrap;align-items:center;}
+.status{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;}
+.sd{width:8px;height:8px;border-radius:50%;background:#ccc;}
+.sd.synced{background:#2a9d8f;box-shadow:0 0 0 3px rgba(42,157,143,.2);}
+.sd.syncing{background:#f4a261;animation:bl 1s infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{padding:7px 14px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
+.b-blue{background:#0f3460;color:#fff;}
+.b-green{background:#1b5e20;color:#fff;}
+.b-purple{background:#4a0080;color:#fff;}
+.b-orange{background:#b5451b;color:#fff;}
+.b-wa{background:#25d366;color:#fff;}
+.main{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.day-summary{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.day-summary h2{font-size:.9rem;font-weight:800;margin-bottom:10px;}
+.stats-row{display:flex;gap:10px;flex-wrap:wrap;}
+.stat-card{border-radius:12px;padding:10px 16px;text-align:center;min-width:90px;}
+.sc-tot{background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;}
+.sc-low{background:linear-gradient(135deg,#fff0f1,#ffd6d8);color:#9d0208;}
+.sc-up{background:linear-gradient(135deg,#e8f5e9,#a5d6a7);color:#1b4332;}
+.stat-n{font-size:1.8rem;font-weight:900;line-height:1;}
+.stat-l{font-size:.68rem;font-weight:700;opacity:.75;margin-top:3px;}
+/* Send All Banner */
+.send-banner{background:linear-gradient(90deg,#1b5e20,#2e7d32);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;}
+.send-banner .sb-text{flex:1;font-size:.85rem;font-weight:700;}
+.send-banner .sb-count{font-size:1.4rem;font-weight:900;color:#a5d6a7;}
+.week-nav{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:9px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.week-nav button{background:#f0f0f0;border:none;border-radius:8px;padding:5px 12px;font-family:'Tajawal',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
+.week-label{flex:1;text-align:center;font-size:.85rem;font-weight:800;}
+.day-tabs{display:flex;gap:5px;flex-wrap:wrap;}
+.day-tab{padding:6px 12px;border:none;border-radius:20px;font-family:'Tajawal',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;background:#f0f0f0;color:#555;}
+.day-tab.active{background:#0f3460;color:#fff;}
+.sections{display:flex;flex-direction:column;gap:12px;}
+.sec-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.sec-head{padding:11px 14px;color:#fff;font-size:.9rem;font-weight:800;display:flex;justify-content:space-between;align-items:center;}
+.sh-low{background:linear-gradient(90deg,#9d0208,#e63946);}
+.sh-up{background:linear-gradient(90deg,#1b4332,#2d6a4f);}
+.sec-body{padding:10px;}
+.cls-block{margin-bottom:10px;}
+.cls-title{font-size:.8rem;font-weight:800;margin-bottom:5px;padding:4px 9px;background:#f5f5f5;border-radius:8px;display:flex;justify-content:space-between;}
+.cls-title span{color:#888;font-weight:600;}
+.confirmed-ok{color:#2a9d8f;font-size:.78rem;font-weight:700;padding:5px 9px;}
+.not-sent{color:#f4a261;font-size:.76rem;font-style:italic;padding:4px 9px;}
+.stu-item{padding:7px 9px;font-size:.8rem;border-bottom:1px solid #f5f5f5;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;}
+.stu-item:last-child{border-bottom:none;}
+.stu-num{color:#ccc;font-size:.68rem;font-weight:700;min-width:16px;padding-top:2px;}
+.stu-name{font-weight:800;flex:1;min-width:80px;}
+.stu-acts{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:2px;}
+.ph-tag{border-radius:6px;padding:2px 7px;font-size:.67rem;font-weight:700;}
+.ph-ok{background:#e8f5e9;color:#1b5e20;}
+.ph-no{background:#fff3e0;color:#e65100;}
+.xb{border:none;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+.xb-sms{background:#0f3460;color:#fff;}
+.xb-wa{background:#25d366;color:#fff;}
+.xb-edit{background:#f0f0f0;color:#555;}
+/* Modals */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.ov.hidden{display:none;}
+.sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;}
+.sh-head{padding:14px 16px;background:linear-gradient(120deg,#1a1a2e,#0f3460);color:#fff;display:flex;justify-content:space-between;align-items:center;}
+.sh-head h3{font-size:.95rem;font-weight:900;}
+.x-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:.9rem;}
+.sh-body{padding:12px;overflow-y:auto;flex:1;}
+.sh-foot{padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px;}
+.sh-foot button{flex:1;border:none;border-radius:10px;padding:11px;font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:900;cursor:pointer;}
+.f-wa{background:#25d366;color:#fff;}
+.f-sms{background:#0f3460;color:#fff;}
+/* Send list items */
+.sa-item{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0;}
+.sa-item:last-child{border-bottom:none;}
+.sa-name{flex:1;font-size:.8rem;font-weight:700;}
+.sa-cls{font-size:.68rem;color:#999;}
+.sa-phone{font-size:.72rem;color:#333;direction:ltr;}
+.sa-noph{font-size:.7rem;color:#e65100;}
+.sa-wa{background:#25d366;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+.sa-sms{background:#0f3460;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+/* Phone manager */
+.pm-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;}
+.pm-ov.hidden{display:none;}
+.pm-box{background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:88vh;display:flex;flex-direction:column;}
+.pm-search{width:100%;padding:8px 11px;border:1.5px solid #ddd;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.83rem;margin-bottom:10px;outline:none;}
+.pm-search:focus{border-color:#0f3460;}
+.pm-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #f0f0f0;}
+.pm-row:last-child{border-bottom:none;}
+.pm-name{flex:1;font-size:.78rem;font-weight:700;}
+.pm-cls{background:#e3f2fd;color:#1565c0;border-radius:5px;padding:1px 5px;font-size:.65rem;font-weight:700;}
+.pm-inp{width:130px;padding:5px 7px;border:1.5px solid #ddd;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.75rem;direction:ltr;outline:none;}
+.pm-inp:focus{border-color:#0f3460;}
+.pm-sv{background:#0f3460;color:#fff;border:none;border-radius:8px;padding:5px 11px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+/* Edit modal */
+.ed-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
+.ed-ov.hidden{display:none;}
+.ed-box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:310px;}
+.ed-box h4{font-size:.92rem;font-weight:900;margin-bottom:2px;}
+.ed-box p{font-size:.74rem;color:#999;margin-bottom:11px;}
+.ed-box input{width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-family:'Tajawal',sans-serif;font-size:.88rem;direction:ltr;outline:none;margin-bottom:11px;}
+.ed-box input:focus{border-color:#0f3460;}
+.ed-btns{display:flex;gap:8px;}
+.ed-btns button{flex:1;padding:8px;border:none;border-radius:9px;font-family:'Tajawal',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
+.ed-save{background:#0f3460;color:#fff;}
+.ed-cancel{background:#f0f0f0;color:#555;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:#1a1a2e;color:#fff;padding:9px 20px;border-radius:22px;font-size:.83rem;font-weight:600;z-index:9999;transition:transform .25s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📊 لوحة الغياب – المسؤول</h1>
+    <p>متابعة غياب المرحلة الدنيا والعليا</p>
+  </div>
+  <div class="hd" id="hDate">...</div>
+</header>
+
+<div class="top-bar">
+  <div class="status"><div class="sd syncing" id="sDot"></div><span id="sTxt">جارٍ التحميل...</span></div>
+  <button class="btn b-blue" onclick="loadAll()">🔄 تحديث</button>
+  <button class="btn b-green" onclick="exportTodayExcel()">📥 اليوم</button>
+  <button class="btn b-purple" onclick="exportWeekExcel()">📅 الأسبوع</button>
+  <button class="btn b-orange" onclick="openPM()">📱 الأرقام</button>
+</div>
+
+<div class="main">
+  <!-- Stats -->
+  <div class="day-summary">
+    <h2>📈 إجمالي اليوم</h2>
+    <div class="stats-row">
+      <div class="stat-card sc-tot"><div class="stat-n" id="gAll">0</div><div class="stat-l">إجمالي</div></div>
+      <div class="stat-card sc-low"><div class="stat-n" id="gLower">0</div><div class="stat-l">المرحلة الدنيا</div></div>
+      <div class="stat-card sc-up"><div class="stat-n" id="gUpper">0</div><div class="stat-l">المرحلة العليا</div></div>
+    </div>
+  </div>
+
+  <!-- Send All Banner -->
+  <div class="send-banner" id="sendBanner" style="display:none;">
+    <div class="sb-text">📣 <span id="sbCount" class="sb-count">0</span> طالب غائب — أرسل إشعاراً لجميع أولياء الأمور</div>
+    <button class="btn b-wa" onclick="openSendAll()">🟢 إرسال للجميع</button>
+  </div>
+
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">◀ السابق</button>
+    <div class="week-label" id="weekLabel">...</div>
+    <button onclick="changeWeek(1)">التالي ▶</button>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+  <div class="sections" id="sections"><div style="text-align:center;padding:40px;color:#aaa">جارٍ التحميل...</div></div>
+</div>
+
+<!-- Send All Modal -->
+<div class="ov hidden" id="saModal">
+  <div class="sheet">
+    <div class="sh-head">
+      <h3>📣 إرسال إشعار الغياب</h3>
+      <button class="x-btn" onclick="document.getElementById('saModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="sh-body" id="saList"></div>
+    <div class="sh-foot">
+      <button class="f-wa" onclick="bulkSend('wa')">🟢 واتساب للجميع</button>
+      <button class="f-sms" onclick="bulkSend('sms')">💬 SMS للجميع</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phone Manager -->
+<div class="pm-ov hidden" id="pmModal">
+  <div class="pm-box">
+    <div class="sh-head">
+      <h3>📱 إدارة الأرقام</h3>
+      <button class="x-btn" onclick="document.getElementById('pmModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="sh-body">
+      <input class="pm-search" id="pmQ" placeholder="🔍 ابحث باسم الطالب..." oninput="renderPM()">
+      <div id="pmList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Phone -->
+<div class="ed-ov hidden" id="edModal">
+  <div class="ed-box">
+    <h4 id="edName">تعديل الرقم</h4>
+    <p>أدخل الرقم مع رمز الدولة</p>
+    <input type="tel" id="edVal" placeholder="966XXXXXXXXX" dir="ltr">
+    <div class="ed-btns">
+      <button class="ed-save" onclick="saveEd()">💾 حفظ</button>
+      <button class="ed-cancel" onclick="document.getElementById('edModal').classList.add('hidden')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,get}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app=initializeApp({apiKey:"key",databaseURL:"https://school-attendance-24215-default-rtdb.firebaseio.com",projectId:"school-attendance-24215"});
+const db=getDatabase(app);
+
+// ===== أرقام الجوالات من PDF =====
+const PP={"s1_0":{"0":"966532299598","1":"966533220414","2":"966578087669","3":"966578466360","4":"966551405681","5":"966556418160","6":"966505513055","7":"966555545079","8":"966500625246","9":"966509733395","10":"966504788669","11":"966546000823","12":"966578812816","13":"966554517189","14":"966566555059","15":"966552700056","16":"966509193979","17":"966542022219","18":"966540655234","19":"966507589613","20":"966576113713","21":"966503632503","22":"966504771647","23":"966503892953"},"s1_1":{"0":"966554532249","1":"966551058728","2":"966554950554","3":"966537408185","4":"966578617459","5":"966566033777","6":"966506738315","7":"966566545699","8":"966571259237","9":"966560043341","10":"966554836958","11":"966558055538","12":"966544182037","13":"966535909947","14":"966542316669","15":"966557388694","16":"966563843497","17":"966555098482","18":"966559623541","19":"966555252836","20":"966535512551","21":"966553197173","22":"966562340229"},"s1_2":{"0":"966509966103","1":"966598707621","2":"966535781793","3":"966552093095","4":"966531255915","5":"966560548910","6":"966558571550","7":"966504910758","8":"966555591992","9":"966569569638","10":"966542201427","11":"966553815589","12":"966566778864","13":"966507586821","14":"966566778725","15":"966568355594","16":"966533301972","17":"966591310956","18":"966532481677","19":"966507561628","20":"966537879210","21":"966537269795","22":"966507921269","23":"966552062443"},"s1_3":{"0":"966536385212","1":"966504237311","2":"966556339029","3":"966577159835","4":"966538613577","5":"966554155802","6":"966540202032","7":"966501122637","8":"966567031178","9":"966558883115","10":"966557760301","11":"966580554323","12":"966599435207","13":"966534998133","14":"966561156118","15":"966556633356","16":"966501774494","17":"966504508087","18":"966508923066","19":"966503390798","20":"966507237727","21":"966563003039"},"s2_0":{"0":"966507548620","1":"966503713489","2":"966537050392","3":"966544554924","4":"966594379746","5":"966557731506","6":"966504753372","7":"966599403017","8":"966566793942","9":"966544070243","10":"966500008635","11":"966565888776","12":"966557832883","13":"966561557767","14":"966534998133","15":"966560007916","16":"966541500646","17":"966555992950","18":"966590400670","19":"966567679094","20":"966536444711","21":"966578573081","22":"966566355363","23":"966542033735","24":"966550014299","25":"966566001633","26":"966545230440","27":"966537050392"},"s2_1":{"0":"966508039591","1":"966547205710","2":"966501298685","3":"966568763199","4":"966560910080","5":"966506165616","6":"966548771446","7":"966555074434","8":"966594234360","9":"966532853961","10":"966555190648","11":"966565660077","12":"966555547048","13":"966540405125","14":"966504810355","15":"966535550316","16":"966531657879","17":"966558948196","18":"966560204039","19":"966597557899","20":"966538382513","21":"966591709654","22":"966543302434","23":"966505544425","24":"966503553095","25":"966559923360","26":"966544533857","27":"966503549547","28":"966555551463","29":"966557449204"},"s2_2":{"0":"966555684958","1":"966545055529","2":"966550109935","3":"966543445735","4":"966504481633","5":"966505560613","6":"966563244036","7":"966563391233","8":"966561524819","9":"966555678835","10":"966503520706","11":"966555603818","12":"966599886789","13":"966561917993","14":"966536036034","15":"966509471160","16":"966566690400","17":"966556414508","18":"966544054119","19":"966553547025","20":"966502696155","21":"966558774875","22":"966549223000","23":"966592228084","24":"966565502226","25":"966505124656","26":"966556946180"},"s2_3":{"0":"966575098030","1":"966506811803","2":"966541693727","3":"966566600155","4":"966544666505","5":"966540004792","6":"966551595770","7":"966554535065","8":"966539779509","9":"966555392278","10":"966535445558","11":"966541818335","12":"966561589530","13":"966533039415","14":"966502679189","15":"966504232320","16":"966509547133","17":"966559823706","18":"966544099838","19":"966501883011","20":"966554508545","21":"966544904145","22":"966566699047","23":"966559890515","24":"966587677355","25":"966558982269","26":"966503968676","27":"966550095510"},"s3_0":{"0":"966557399018","1":"966591692697","2":"966544453951","3":"966552820618","4":"966550492859","5":"966555506272","6":"966569942299","7":"966580026945","8":"966571259237","9":"966554229236","10":"966555547540","11":"966545418363","12":"966544180726","13":"966582588805","14":"966554777494","15":"966502509093","16":"966543477404","17":"966556081608","18":"966506659567","19":"966506500951","20":"966555503623","21":"966590459962","22":"966545421121","23":"966546216521","24":"966500552031","25":"966537311641","26":"966507589613","27":"966531402633","28":"966541514249","29":"966555561319","30":"966542171756","31":"966549949939","32":"966556054352","33":"966503355908"},"s3_1":{"0":"966556120194","1":"966504773583","2":"966555548803","3":"966504347557","4":"966534932363","5":"966544617554","6":"966561107707","7":"966534348343","8":"966563559571","9":"966554533722","10":"966534666343","11":"966504771838","12":"966552191154","13":"966508359716","14":"966551920140","15":"966504621837","16":"966562228954","17":"966566408066","18":"966555565644","19":"966505511067","20":"966558373886","21":"966502006222","22":"966567699265","23":"966566185657","24":"966504773583","25":"966560887714","26":"966555277213","27":"966557207328","28":"966590008045","29":"966559480635","30":"966556149495","31":"966552005308","32":"966534207016","33":"966567216565","34":"966566545699","35":"966505568538"},"s3_2":{"0":"966536146922","1":"966535199882","2":"966594161338","3":"966592167240","4":"966538612800","5":"966560020038","6":"966509991440","7":"966552724426","8":"966553678575","9":"966543909083","10":"966509367739","11":"966558528560","12":"966542795554","13":"966563339311","14":"966563366916","15":"966562067568","16":"966501032502","17":"966545545898","18":"966549861103","19":"966564564099","20":"966561066166","21":"966567493891","22":"966500258496","23":"966561722789","24":"966532525258","25":"966555963141","26":"966568800003","27":"966551333079","28":"966544333311","29":"966555105789","30":"966550078150","31":"966550104089","32":"966565895964","33":"966507708890","34":"966598355697","35":"966504322557","36":"966551598833"},"s3_3":{"0":"966508046163","1":"966566952834","2":"966595978783","3":"966501760755","4":"966555734507","5":"966505449178","6":"966537269795","7":"966506711912","8":"966507426656","9":"966504799067","10":"966555301672","11":"966554089435","12":"966537116119","13":"966503527689","14":"966555571632","15":"966568698477","16":"966542033735","17":"966580459508","18":"966537862866","19":"966543929414","20":"966541585939","21":"966501226265","22":"966504783922","23":"966535863243","24":"966555510827","25":"966500044650","26":"966542993854","27":"966560461821","28":"966555826474","29":"966566676099","30":"966543397993","31":"966502773223","32":"966555550745","33":"966556270648"},"s4_0":{"0":"966597557899","1":"966544180726","2":"966541835058","3":"966560767906","4":"966551557277","5":"966555562916","6":"966555562128","7":"966503535450","8":"966555575071","9":"966577060575","10":"966504514974","11":"966560653199","12":"966507808095","13":"966542316669","14":"966555572197","15":"966501313558","16":"966567840000","17":"966500424088","18":"966543005553","19":"966558845325","20":"966581113373","21":"966561524819","22":"966502618882","23":"966548485559","24":"966506532163","25":"966501764526","26":"966501660021","27":"966550095510","28":"966580901155","29":"966506532163"},"s4_1":{"0":"966597392000","1":"966553331680","2":"966554513807","3":"966537632562","4":"966545996618","5":"966555625685","6":"966580037776","7":"966573240526","8":"966507308591","9":"966555051130","10":"966577195362","11":"966580656878","12":"966509325527","13":"966576920121","14":"966598964974","15":"966530785982","16":"966534859816","17":"966500648313","18":"966565609200","19":"966566151314","20":"966508039591","21":"966545461467","22":"966505527658","23":"966500840005","24":"966545930545","25":"966558883115","26":"966548916677","27":"966534735937","28":"966537020232"},"s4_2":{"0":"966567601833","1":"966509717625","2":"966566025297","3":"966500212565","4":"966578342256","5":"966576187254","6":"966554852630","7":"966559327046","8":"966500660820","9":"966501297992","10":"966555992950","11":"966555538532","12":"966502773747","13":"966504799621","14":"966545628249","15":"966555564858","16":"966550926805","17":"966580291823","18":"966501956730","19":"966597561532","20":"966542063073","21":"966558055538","22":"966576105004","23":"966540543044","24":"966508382559","25":"966506212249","26":"966548062828","27":"966568728873","28":"966555895136"},"s4_3":{"0":"966555510674","1":"966500027708","2":"966560022396","3":"966555568538","4":"966566555059","5":"966568120855","6":"966560040144","7":"966504347557","8":"966551767214","9":"966580182506","10":"966500095780","11":"966577296565","12":"966555020065","13":"966500873386","14":"966503527902","15":"966551557277","16":"966596214011","17":"966555527387","18":"966560008281","19":"966545313320","20":"966509309304","21":"966566904429","22":"966502297560","23":"966506070983","24":"966505560613","25":"966503519854","26":"966507586821","27":"966566344881","28":"966555895136"},"s5_0":{"0":"966551453255","1":"966540830458","2":"966532747509","3":"966555505656","4":"966541584689","5":"966504788175","6":"966568351502","7":"966559935507","8":"966565167073","9":"966555510615","10":"966562313287","11":"966578375636","12":"966564822499","13":"966555582616","14":"966535478825","15":"966580843130","16":"966532855530","17":"966555545402","18":"966535379253","19":"966555521061","20":"966557377066","21":"966547360893","22":"966503807608","23":"966505525219","24":"966568402472","25":"966502376685","26":"966555215228","27":"966508988203","28":"966555536341","29":"966503526826","30":"966503892953","31":"966565512308","32":"966597990891"},"s5_1":{"0":"966508645815","1":"966505969767","2":"966555508264","3":"966598700842","4":"966502642818","5":"966508926766","6":"966554515122","7":"966555546124","8":"966545224977","9":"966547443932","10":"966532351696","11":"966555872733","12":"966500155951","13":"966555550857","14":"966565095524","15":"966541602946","16":"966599403017","17":"966535445558","18":"966555696197","19":"966555872733","20":"966566122333","21":"966559823706","22":"966562563234","23":"966564666882","24":"966509733395","25":"966557399018","26":"966548872410","27":"966549861103","28":"966504402185","29":"966547064573","30":"966502883009","31":"966555584677","32":"966562269656","33":"966559407736"},"s5_2":{"0":"966566440430","1":"966507645455","2":"966506519012","3":"966555708650","4":"966536408887","5":"966507708890","6":"966531300208","7":"966565112333","8":"966554613593","9":"966537116119","10":"966500044650","11":"966566056196","12":"966537632562","13":"966554174258","14":"966566987855","15":"966504543971","16":"966503558700","17":"966500512514","18":"966544617554","19":"966566363444","20":"966568535116","21":"966549485779","22":"966552547401","23":"966503549547","24":"966541113070","25":"966551336962","26":"966581911046","27":"966500182198","28":"966560387973","29":"966504532366","30":"966555419255","31":"966558646191","32":"966531556598"},"s5_3":{"0":"966558845325","1":"966500042599","2":"966565609100","3":"966561545854","4":"966599997684","5":"966507074492","6":"966545736807","7":"966563501428","8":"966583534536","9":"966555037871","10":"966545475377","11":"966505535761","12":"966549888280","13":"966564232320","14":"966533301972","15":"966569596033","16":"966509278502","17":"966598697640","18":"966566690400","19":"966565579033","20":"966555767171","21":"966504772240","22":"966505500639","23":"966507651628","24":"966558694740","25":"966554535065","26":"966555840175","27":"966503506496","28":"966555603923","29":"966532080666","30":"966565111660","31":"966543666205","32":"966504506756"},"s6_0":{"0":"966530577836","1":"966555252836","2":"966536025182","3":"966535933069","4":"966554777525","5":"966560045490","6":"966566952834","7":"966507636420","8":"966535606864","9":"966530130414","10":"966560653199","11":"966555538532","12":"966507745607","13":"966555542866","14":"966555575071","15":"966509059675","16":"966594498143","17":"966543796259","18":"966555568776","19":"966566033777","20":"966549949939","21":"966569607516","22":"966565456900","23":"966557806043","24":"966506514106","25":"966506665173","26":"966577069034","27":"966555568776","28":"966543477404","29":"966503397534","30":"966506070983","31":"966568091023","32":"966504543932"},"s6_1":{"0":"966537263447","1":"966547205710","2":"966562313287","3":"966545421121","4":"966505554481","5":"966540830458","6":"966509848799","7":"966544070243","8":"966555870517","9":"966505598519","10":"966560066669","11":"966553030005","12":"966507724789","13":"966582745920","14":"966542316669","15":"966509848799","16":"966556231811","17":"966559446589","18":"966554539859","19":"966504506040","20":"966509006732","21":"966542675573","22":"966568058775","23":"966502060551","24":"966555543421","25":"966550665676","26":"966598355697","27":"966543442629","28":"966551453255","29":"966566545699","30":"966560601211"},"s6_2":{"0":"966536358767","1":"966505567340","2":"966555571345","3":"966560008281","4":"966545949636","5":"966537116119","6":"966535597979","7":"966558214007","8":"966545224977","9":"966534187771","10":"966555571632","11":"966561066166","12":"966565557599","13":"966555678189","14":"966559908655","15":"966541215281","16":"966555826474","17":"966555545466","18":"966553428051","19":"966555531637","20":"966546205621","21":"966596956565","22":"966555547726","23":"966533332303","24":"966537020232","25":"966541652579","26":"966542412207","27":"966538625215","28":"966532248426","29":"966552005308","30":"966566943620","31":"966541741577","32":"966503529974"},"s6_3":{"0":"966504532042","1":"966557040247","2":"966569819141","3":"966546747468","4":"966551634252","5":"966507586821","6":"966545836217","7":"966506165616","8":"966546751751","9":"966567807142","10":"966504524204","11":"966569487855","12":"966555992950","13":"966506631944","14":"966502509093","15":"966562280144","16":"966555419255","17":"966504532843","18":"966558132043","19":"966545192882","20":"966506607748","21":"966544078866","22":"966561484116","23":"966590008045","24":"966565100341","25":"966547360893","26":"966555909188","27":"966542690960","28":"966500856246","29":"966557399736","30":"966556602258","31":"966566030781"}};
+
+const SML=[
+  {id:'s1',name:'الأول',cls:['الصف الأول / 1','الصف الأول / 2','الصف الأول / 3','الصف الأول / 4']},
+  {id:'s2',name:'الثاني',cls:['الصف الثاني / 1','الصف الثاني / 2','الصف الثاني / 3','الصف الثاني / 4']},
+  {id:'s3',name:'الثالث',cls:['الصف الثالث / 1','الصف الثالث / 2','الصف الثالث / 3','الصف الثالث / 4']}
+];
+const SMU=[
+  {id:'s4',name:'الرابع',cls:['الصف الرابع / 1','الصف الرابع / 2','الصف الرابع / 3','الصف الرابع / 4','الصف الرابع / 5']},
+  {id:'s5',name:'الخامس',cls:['الصف الخامس / 1','الصف الخامس / 2','الصف الخامس / 3','الصف الخامس / 4']},
+  {id:'s6',name:'السادس',cls:['الصف السادس / 1','الصف السادس / 2','الصف السادس / 3','الصف السادس / 4']}
+];
+const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const HM=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+
+let wOff=0,dIdx=0,wDays=[],aData={},STL={},STU={};
+let ov={};
+try{ov=JSON.parse(localStorage.getItem('pOv')||'{}');}catch(e){}
+
+// قائمة الغائبين الحالية
+let absentToday=[];
+
+function gph(gid,ci,idx){
+  const ok=ov[`${gid}_${ci}_${idx}`];
+  if(ok)return ok;
+  const p=PP[`${gid}_${ci}`];
+  return p?p[String(idx)]||null:null;
+}
+function sph(gid,ci,idx,val){
+  const k=`${gid}_${ci}_${idx}`;
+  if(val&&val.trim())ov[k]=val.trim(); else delete ov[k];
+  try{localStorage.setItem('pOv',JSON.stringify(ov));}catch(e){}
+}
+
+function toH(dt){
+  const y=dt.getFullYear(),m=dt.getMonth()+1,d=dt.getDate();
+  const jd=Math.floor((1461*(y+4800+Math.floor((m-14)/12)))/4)+Math.floor((367*(m-2-12*(Math.floor((m-14)/12))))/12)-Math.floor((3*(Math.floor((y+4900+Math.floor((m-14)/12))/100)))/4)+d-32075;
+  let l=jd-1948440+10632;
+  const n=Math.floor((l-1)/10631);l=l-10631*n+354;
+  const j=(Math.floor((10985-l)/5316))*(Math.floor((50*l)/17719))+(Math.floor(l/5670))*(Math.floor((43*l)/15238));
+  l=l-(Math.floor((30-j)/15))*(Math.floor((17719*j)/50))-(Math.floor(j/16))*(Math.floor((15238*j)/43))+29;
+  const hm=Math.floor((24*l)/709);const hd=l-Math.floor((709*hm)/24)-2;
+  return{y:30*n+j-30,m:hm,d:hd<1?1:hd};
+}
+function dlbl(dt){const h=toH(dt);return`${DN[dt.getDay()]} ${h.d} ${HM[h.m-1]} ${h.y}هـ`;}
+function buildMsg(name,dt){return`السلام عليكم،\nابنكم *${name}* غائب اليوم\n📅 ${dlbl(dt)}\n\nمدرسة عمورية الابتدائية`;}
+
+function dk(d){return`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;}
+function gwd(off){
+  const now=new Date(),sun=new Date(now);
+  sun.setDate(now.getDate()-now.getDay()+(off*7));
+  return Array.from({length:5},(_,i)=>{const d=new Date(sun);d.setDate(sun.getDate()+i);return d;});
+}
+function setSUI(s,m){document.getElementById('sDot').className='sd '+s;document.getElementById('sTxt').textContent=m;}
+
+async function loadStudents(){
+  try{
+    const[l,u]=await Promise.all([get(ref(db,'lower_students_v1')),get(ref(db,'upper_students_v1'))]);
+    if(l.exists())STL=l.val();if(u.exists())STU=u.val();
+  }catch(e){}
+}
+async function loadDay(date){
+  const key=dk(date);
+  if(aData[key])return aData[key];
+  try{
+    const[ls,us,ln,un]=await Promise.all([
+      get(ref(db,`lower_d_${key}`)),get(ref(db,`upper_d_${key}`)),
+      get(ref(db,`lower_no_absent_${key}`)),get(ref(db,`upper_no_absent_${key}`))
+    ]);
+    aData[key]={
+      lower:{ATT:ls.exists()?ls.val():{},noA:ln.exists()?ln.val():{}},
+      upper:{ATT:us.exists()?us.val():{},noA:un.exists()?un.val():{}}
+    };
+  }catch(e){aData[key]={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};}
+  return aData[key];
+}
+function getAbs(ST,ATT,sm){
+  const r={};
+  sm.forEach(sg=>{
+    r[sg.id]={cls:{}};
+    sg.cls.forEach((c,ci)=>{
+      const k=`c${ci}`,sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+      const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+      r[sg.id].cls[k]={name:c,sts:sts.map((s,i)=>({...s,_i:i})).filter(s=>att[s.id]===true)};
+    });
+  });
+  return r;
+}
+
+window.loadAll=async function(){
+  setSUI('syncing','جارٍ التحميل...');
+  wDays=gwd(wOff);
+  const tk=dk(new Date());
+  await loadStudents();
+  for(const d of wDays)await loadDay(d);
+  const ti=wDays.findIndex(d=>dk(d)===tk);
+  if(wOff===0&&ti>=0)dIdx=ti; else if(dIdx>=wDays.length)dIdx=0;
+  setSUI('synced','محدّث ✅');
+  rwn();rdt();renderDay(dIdx);rh();
+};
+
+function rh(){const now=new Date(),h=toH(now);document.getElementById('hDate').textContent=`${DN[now.getDay()]} ${h.d} ${HM[h.m-1]} ${h.y}هـ`;}
+function rwn(){
+  const[f,l]=[wDays[0],wDays[4]];
+  const fmt=d=>`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  document.getElementById('weekLabel').textContent=
+    wOff===0?`الأسبوع الحالي (${fmt(f)} – ${fmt(l)})`:
+    wOff<0?`أسبوع سابق (${fmt(f)} – ${fmt(l)})`:
+    `أسبوع قادم (${fmt(f)} – ${fmt(l)})`;
+}
+function rdt(){
+  const t=document.getElementById('dayTabs');t.innerHTML='';
+  wDays.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className=`day-tab${i===dIdx?' active':''}`;
+    b.textContent=`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    b.onclick=()=>{dIdx=i;rdt();renderDay(i);};
+    t.appendChild(b);
+  });
+}
+
+function renderDay(idx){
+  const date=wDays[idx];
+  const data=aData[dk(date)]||{lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
+  const lA=getAbs(STL,data.lower.ATT,SML);
+  const uA=getAbs(STU,data.upper.ATT,SMU);
+  let tl=0,tu=0;
+  absentToday=[];
+
+  SML.forEach(sg=>sg.cls.forEach((cls,ci)=>{
+    const sts=lA[sg.id].cls[`c${ci}`].sts;
+    tl+=sts.length;
+    sts.forEach(s=>absentToday.push({name:s.name,phone:gph(sg.id,ci,s._i),gid:sg.id,ci,idx:s._i,cls,date}));
+  }));
+  SMU.forEach(sg=>sg.cls.forEach((cls,ci)=>{
+    const sts=uA[sg.id].cls[`c${ci}`].sts;
+    tu+=sts.length;
+    sts.forEach(s=>absentToday.push({name:s.name,phone:gph(sg.id,ci,s._i),gid:sg.id,ci,idx:s._i,cls,date}));
+  }));
+
+  document.getElementById('gAll').textContent=tl+tu;
+  document.getElementById('gLower').textContent=tl;
+  document.getElementById('gUpper').textContent=tu;
+
+  const banner=document.getElementById('sendBanner');
+  if(tl+tu>0){banner.style.display='flex';document.getElementById('sbCount').textContent=tl+tu;}
+  else banner.style.display='none';
+
+  const cont=document.getElementById('sections');cont.innerHTML='';
+
+  function buildSec(sm,aMap,secData,isL){
+    const card=document.createElement('div');card.className='sec-card';
+    const tot=isL?tl:tu;
+    const lbl=isL?'المرحلة الدنيا (1-3)':'المرحلة العليا (4-6)';
+    const hc=isL?'sh-low':'sh-up';
+    let b='';
+    sm.forEach(sg=>{
+      b+=`<div class="cls-block">`;
+      sg.cls.forEach((cls,ci)=>{
+        const k=`c${ci}`,info=aMap[sg.id].cls[k];
+        const noAbs=secData.noA&&secData.noA[sg.id]&&secData.noA[sg.id][k];
+        b+=`<div class="cls-title">${cls}<span>غياب: ${info.sts.length}</span></div>`;
+        if(noAbs){
+          b+=`<div class="confirmed-ok">✅ لا يوجد غياب (مؤكد)</div>`;
+        }else if(!info.sts.length){
+          b+=`<div class="not-sent">لم يُرسل بعد</div>`;
+        }else{
+          info.sts.forEach((s,i)=>{
+            const ph=gph(sg.id,ci,s._i);
+            const ptag=ph?`<span class="ph-tag ph-ok">📱 ${ph}</span>`:`<span class="ph-tag ph-no">لا يوجد رقم</span>`;
+            // كل زر يحمل بياناته كـ data attributes - لا inline JS
+            const wa=ph?`<button class="xb xb-wa" data-ph="${ph}" data-name="${s.name.replace(/"/g,'&quot;')}" data-act="wa">🟢 WA</button>`:'';
+            const sms=ph?`<button class="xb xb-sms" data-ph="${ph}" data-name="${s.name.replace(/"/g,'&quot;')}" data-act="sms">💬 SMS</button>`:'';
+            const ed=`<button class="xb xb-edit" data-gid="${sg.id}" data-ci="${ci}" data-idx="${s._i}" data-name="${s.name.replace(/"/g,'&quot;')}" data-ph="${ph||''}" data-act="edit">✏️</button>`;
+            b+=`<div class="stu-item"><span class="stu-num">${i+1}</span><span class="stu-name">${s.name}</span><div class="stu-acts">${ptag}${wa}${sms}${ed}</div></div>`;
+          });
+        }
+      });
+      b+=`</div>`;
+    });
+    card.innerHTML=`<div class="sec-head ${hc}">📚 ${lbl}<span>غياب: ${tot}</span></div><div class="sec-body">${b}</div>`;
+
+    // ربط الأحداث بعد إنشاء DOM
+    card.querySelectorAll('[data-act]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const act=btn.dataset.act;
+        if(act==='wa'){
+          const msg=buildMsg(btn.dataset.name,wDays[dIdx]);
+          window.open(`https://wa.me/${btn.dataset.ph}?text=${encodeURIComponent(msg)}`,'_blank');
+        }else if(act==='sms'){
+          const msg=buildMsg(btn.dataset.name,wDays[dIdx]);
+          window.open(`sms:${btn.dataset.ph}?body=${encodeURIComponent(msg)}`,'_blank');
+        }else if(act==='edit'){
+          openEd(btn.dataset.gid,+btn.dataset.ci,+btn.dataset.idx,btn.dataset.name,btn.dataset.ph);
+        }
+      });
+    });
+    cont.appendChild(card);
+  }
+
+  buildSec(SML,lA,data.lower,true);
+  buildSec(SMU,uA,data.upper,false);
+}
+
+window.changeWeek=function(d){wOff+=d;dIdx=0;aData={};loadAll();};
+
+// ===== Send All =====
+window.openSendAll=function(){
+  document.getElementById('saModal').classList.remove('hidden');
+  const list=document.getElementById('saList');
+  if(!absentToday.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#aaa">لا يوجد غياب</div>';return;}
+  let h='';
+  absentToday.forEach((s,i)=>{
+    const ph=s.phone?`<span class="sa-phone">${s.phone}</span>`:`<span class="sa-noph">لا يوجد رقم</span>`;
+    const wa=s.phone?`<button class="sa-wa" data-i="${i}">🟢 WA</button>`:'';
+    const sms=s.phone?`<button class="sa-sms" data-i="${i}">💬 SMS</button>`:'';
+    h+=`<div class="sa-item"><div style="flex:1"><div class="sa-name">${s.name}</div><div class="sa-cls">${s.cls}</div></div>${ph}${wa}${sms}</div>`;
+  });
+  list.innerHTML=h;
+  list.querySelectorAll('.sa-wa').forEach(b=>b.addEventListener('click',()=>{
+    const s=absentToday[+b.dataset.i];
+    window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(buildMsg(s.name,s.date))}`,'_blank');
+  }));
+  list.querySelectorAll('.sa-sms').forEach(b=>b.addEventListener('click',()=>{
+    const s=absentToday[+b.dataset.i];
+    window.open(`sms:${s.phone}?body=${encodeURIComponent(buildMsg(s.name,s.date))}`,'_blank');
+  }));
+};
+
+// إرسال للجميع — واحداً تلو الآخر بزر "التالي"
+let bulkList=[],bulkIdx=0,bulkType='wa';
+window.bulkSend=function(type){
+  const list=absentToday.filter(s=>s.phone);
+  if(!list.length){showT('لا يوجد أرقام مسجلة!');return;}
+  bulkList=list;bulkIdx=0;bulkType=type;
+  document.getElementById('saModal').classList.add('hidden');
+  showBulkStep();
+};
+function showBulkStep(){
+  if(bulkIdx>=bulkList.length){showT(`✅ تم الإرسال لـ ${bulkList.length} طالب`);return;}
+  const s=bulkList[bulkIdx];
+  const msg=buildMsg(s.name,s.date);
+  const url=bulkType==='wa'?`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`:`sms:${s.phone}?body=${encodeURIComponent(msg)}`;
+  // افتح الرسالة
+  window.open(url,'_blank');
+  bulkIdx++;
+  // أظهر نافذة "التالي"
+  showBulkNav();
+}
+function showBulkNav(){
+  const rem=bulkList.length-bulkIdx;
+  const existing=document.getElementById('bulkNav');
+  if(existing)existing.remove();
+  if(bulkIdx>=bulkList.length){showT(`✅ تم الإرسال لجميع الطلاب (${bulkList.length})`);return;}
+  const div=document.createElement('div');
+  div.id='bulkNav';
+  div.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:12px 20px;border-radius:16px;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);';
+  div.innerHTML=`<span style="font-family:Tajawal,sans-serif;font-size:.85rem">متبقي <b>${rem}</b> طالب</span>
+  <button onclick="showBulkStep()" style="background:#25d366;color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:900;cursor:pointer;">التالي ▶</button>
+  <button onclick="document.getElementById('bulkNav').remove();showT('تم الإيقاف')" style="background:#e63946;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-family:Tajawal,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;">إيقاف</button>`;
+  document.body.appendChild(div);
+}
+
+// ===== Edit Phone =====
+let edT=null;
+function openEd(gid,ci,idx,name,ph){
+  edT={gid,ci,idx};
+  document.getElementById('edName').textContent=`✏️ ${name}`;
+  document.getElementById('edVal').value=ph||'966';
+  document.getElementById('edModal').classList.remove('hidden');
+  setTimeout(()=>{document.getElementById('edVal').focus();document.getElementById('edVal').select();},100);
+}
+window.saveEd=function(){
+  if(!edT)return;
+  sph(edT.gid,edT.ci,edT.idx,document.getElementById('edVal').value);
+  document.getElementById('edModal').classList.add('hidden');
+  edT=null;showT('تم الحفظ ✅');renderDay(dIdx);renderPM();
+};
+
+// ===== Phone Manager =====
+window.openPM=function(){
+  document.getElementById('pmModal').classList.remove('hidden');
+  document.getElementById('pmQ').value='';renderPM();
+};
+window.renderPM=function(){
+  const q=document.getElementById('pmQ').value.trim();
+  let h='';
+  [...SML,...SMU].forEach(sg=>{
+    sg.cls.forEach((cls,ci)=>{
+      const ST=SML.find(s=>s.id===sg.id)?STL:STU;
+      const sts=ST[sg.id]?ST[sg.id][`c${ci}`]||[]:[];
+      sts.forEach((s,idx)=>{
+        if(q&&!s.name.includes(q))return;
+        const ph=gph(sg.id,ci,idx)||'';
+        h+=`<div class="pm-row">
+          <div><div class="pm-name">${s.name}</div><span class="pm-cls">${cls}</span></div>
+          <input class="pm-inp" type="tel" value="${ph}" placeholder="966XXXXXXXXX" id="pi_${sg.id}_${ci}_${idx}" dir="ltr">
+          <button class="pm-sv" onclick="savePM('${sg.id}',${ci},${idx})">حفظ</button>
+        </div>`;
+      });
+    });
+  });
+  document.getElementById('pmList').innerHTML=h||'<div style="text-align:center;color:#aaa;padding:20px">لا توجد نتائج</div>';
+};
+window.savePM=function(gid,ci,idx){
+  const el=document.getElementById(`pi_${gid}_${ci}_${idx}`);
+  if(el){sph(gid,ci,idx,el.value);showT('تم ✅');renderDay(dIdx);}
+};
+
+// ===== Excel =====
+window.exportTodayExcel=function(){
+  const date=wDays[dIdx];
+  const data=aData[dk(date)]||{lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
+  const wb=XLSX.utils.book_new();
+  [...SML,...SMU].forEach(sg=>{
+    const isL=!!SML.find(s=>s.id===sg.id);
+    const ST=isL?STL:STU,ATT=isL?data.lower.ATT:data.upper.ATT,noA=isL?data.lower.noA:data.upper.noA;
+    sg.cls.forEach((cls,ci)=>{
+      const k=`c${ci}`,sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+      const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+      const noa=noA&&noA[sg.id]&&noA[sg.id][k];
+      const abs=sts.map((s,i)=>({...s,_i:i})).filter(s=>att[s.id]===true);
+      const rows=[['#','اسم الطالب','رقم الجوال','التاريخ']];
+      if(noa)rows.push(['—','لا يوجد غياب','','مؤكد']);
+      else if(!abs.length)rows.push(['—','لا يوجد غياب مسجل','','']);
+      else abs.forEach((s,i)=>rows.push([i+1,s.name,gph(sg.id,ci,s._i)||'—',dlbl(date)]));
+      const ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:5},{wch:40},{wch:16},{wch:24}];
+      XLSX.utils.book_append_sheet(wb,ws,cls.replace(/\//g,'-').slice(0,31));
+    });
+  });
+  XLSX.writeFile(wb,`غياب_${DN[date.getDay()]}_${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}.xlsx`);
+  showT('تم تصدير Excel ✅');
+};
+window.exportWeekExcel=async function(){
+  showT('جارٍ تجهيز الأسبوع...');
+  for(const d of wDays)await loadDay(d);
+  const wb=XLSX.utils.book_new();
+  [...SML,...SMU].forEach(sg=>{
+    sg.cls.forEach((cls,ci)=>{
+      const isL=!!SML.find(s=>s.id===sg.id);
+      const ST=isL?STL:STU,sts=ST[sg.id]?ST[sg.id][`c${ci}`]||[]:[];
+      const hdr=['#','اسم الطالب','رقم الجوال',...wDays.map(d=>`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`),'إجمالي'];
+      const rows=[hdr];
+      sts.forEach((s,idx)=>{
+        const row=[idx+1,s.name,gph(sg.id,ci,idx)||'—'];
+        let tot=0;
+        wDays.forEach(d=>{
+          const dd=aData[dk(d)]||{lower:{ATT:{}},upper:{ATT:{}}};
+          const att=(isL?dd.lower.ATT:dd.upper.ATT);
+          const a=att[sg.id]?att[sg.id][`c${ci}`]||{}:{};
+          const ab=a[s.id]===true;if(ab)tot++;
+          row.push(ab?'غ':'');
+        });
+        row.push(tot);rows.push(row);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:5},{wch:40},{wch:16},...wDays.map(()=>({wch:13})),{wch:9}];
+      XLSX.utils.book_append_sheet(wb,ws,cls.replace(/\//g,'-').slice(0,31));
+    });
+  });
+  const[f,l]=[wDays[0],wDays[4]];
+  XLSX.writeFile(wb,`غياب_أسبوعي_${f.getDate()}-${f.getMonth()+1}_إلى_${l.getDate()}-${l.getMonth()+1}.xlsx`);
+  showT('تم تصدير الأسبوع ✅');
+};
+
+function showT(msg){
+  const t=document.getElementById('tst');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+loadAll();
+setInterval(()=>{aData={};loadAll();},5*60*1000);
+</script>
+</body>
+</html>
