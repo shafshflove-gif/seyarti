@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الغياب – المسؤول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Tajawal',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh;}
+header{background:linear-gradient(120deg,#1a1a2e,#0f3460);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+header h1{color:#fff;font-size:1.3rem;font-weight:900;}
+header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
+.hd{background:rgba(255,255,255,.12);color:#ffd166;font-size:.78rem;font-weight:700;padding:3px 14px;border-radius:20px;}
+.top-bar{display:flex;gap:10px;padding:14px 20px;background:#fff;border-bottom:1.5px solid #eee;flex-wrap:wrap;align-items:center;}
+.top-bar .status{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;}
+.sd{width:8px;height:8px;border-radius:50%;background:#ccc;}
+.sd.synced{background:#2a9d8f;box-shadow:0 0 0 3px rgba(42,157,143,.2);}
+.sd.syncing{background:#f4a261;animation:bl 1s infinite;}
+.sd.error{background:#e63946;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{padding:8px 18px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;}
+.btn-refresh{background:#0f3460;color:#fff;}
+.btn-excel{background:#1b5e20;color:#fff;}
+.btn-week{background:#4a0080;color:#fff;}
+.main{padding:20px;display:flex;flex-direction:column;gap:16px;}
+.day-summary{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.day-summary h2{font-size:.95rem;font-weight:800;margin-bottom:12px;color:#1a1a2e;}
+.stats-row{display:flex;gap:10px;flex-wrap:wrap;}
+.stat-card{border-radius:12px;padding:12px 18px;text-align:center;min-width:100px;}
+.stat-card.tot{background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;}
+.stat-card.lower{background:linear-gradient(135deg,#fff0f1,#ffd6d8);color:#9d0208;}
+.stat-card.upper{background:linear-gradient(135deg,#e8f5e9,#a5d6a7);color:#1b4332;}
+.stat-n{font-size:2rem;font-weight:900;line-height:1;}
+.stat-l{font-size:.7rem;font-weight:700;opacity:.75;margin-top:4px;}
+.week-nav{display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.week-nav button{background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;}
+.week-nav button:hover{background:#ddd;}
+.week-label{flex:1;text-align:center;font-size:.88rem;font-weight:800;}
+.day-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.day-tab{padding:6px 14px;border:none;border-radius:20px;font-family:'Tajawal',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:#f0f0f0;color:#555;}
+.day-tab.active{background:#0f3460;color:#fff;}
+.sections{display:flex;flex-direction:column;gap:12px;}
+.section-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.section-head{padding:12px 16px;color:#fff;font-size:.92rem;font-weight:800;display:flex;align-items:center;justify-content:space-between;}
+.section-head.lower{background:linear-gradient(90deg,#9d0208,#e63946);}
+.section-head.upper{background:linear-gradient(90deg,#1b4332,#2d6a4f);}
+.section-body{padding:12px;}
+.cls-block{margin-bottom:12px;}
+.cls-title{font-size:.82rem;font-weight:800;color:#1a1a2e;margin-bottom:6px;padding:4px 10px;background:#f5f5f5;border-radius:8px;display:flex;justify-content:space-between;}
+.cls-title span{color:#888;font-weight:600;}
+.no-absent{color:#2a9d8f;font-size:.8rem;font-weight:700;padding:6px 10px;}
+.confirmed-no-absent{color:#2a9d8f;font-size:.8rem;font-weight:700;padding:6px 10px;display:flex;align-items:center;gap:5px;}
+.stu-item{padding:5px 10px;font-size:.82rem;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:8px;}
+.stu-item:last-child{border-bottom:none;}
+.stu-num{color:#bbb;font-size:.7rem;font-weight:700;min-width:20px;}
+.empty-day{text-align:center;padding:40px;color:#aaa;font-size:.9rem;}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#fff;padding:10px 22px;border-radius:24px;font-size:.85rem;font-weight:600;z-index:9999;transition:transform .28s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.week-export-btn{display:flex;gap:8px;align-items:center;}
+.not-reported{color:#f4a261;font-size:.78rem;font-style:italic;padding:4px 10px;}
+
+.tabs-nav{display:flex;gap:8px;padding:14px 20px;background:#fff;border-bottom:1.5px solid #eee;flex-wrap:wrap;}
+.tab-btn{padding:8px 18px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;background:#f0f0f0;color:#555;}
+.tab-btn.active{background:#0f3460;color:#fff;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.phones-section{padding:20px;display:flex;flex-direction:column;gap:16px;}
+.phones-stage{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.phones-stage-head{padding:12px 16px;color:#fff;font-size:.92rem;font-weight:800;}
+.phones-stage-head.lower{background:linear-gradient(90deg,#9d0208,#e63946);}
+.phones-stage-head.upper{background:linear-gradient(90deg,#1b4332,#2d6a4f);}
+.phones-cls{padding:10px 14px;border-bottom:1px solid #f0f0f0;}
+.phones-cls-title{font-size:.82rem;font-weight:800;color:#555;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;}
+.phones-cls-body{display:none;}
+.phones-cls-body.open{display:block;}
+.phone-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f8f8f8;}
+.phone-row:last-child{border-bottom:none;}
+.phone-name{flex:1;font-size:.8rem;font-weight:600;}
+.phone-input{width:120px;padding:4px 8px;border:1.5px solid #ddd;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.78rem;}
+.phone-input:focus{border-color:#0f3460;outline:none;}
+.phone-save{background:#2a9d8f;color:#fff;border:none;border-radius:8px;padding:4px 10px;font-family:'Tajawal',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;}
+.wa-btn{background:#25d366;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+.sms-btn{background:#0077b6;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
+.absent-contact{display:flex;gap:4px;flex-wrap:wrap;}
+@media print {
+  header, .top-bar, .week-nav, .day-tabs, .day-summary, .toast { display: none !important; }
+  .section-card { page-break-inside: avoid; margin-bottom: 20px; box-shadow: none; border: 1px solid #ddd; }
+  .cls-block { page-break-inside: avoid; }
+  body { padding: 0; background: #fff; }
+  .main { padding: 10px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📊 لوحة الغياب – المسؤول</h1>
+    <p>متابعة غياب المرحلة الدنيا والعليا</p>
+  </div>
+  <div class="hd" id="hDate">...</div>
+</header>
+
+<div class="top-bar">
+  <div class="status"><div class="sd syncing" id="sDot"></div><span id="sTxt">جارٍ التحميل...</span></div>
+  <button class="btn btn-refresh" onclick="loadAll()">🔄 تحديث</button>
+  <div class="week-export-btn">
+    <button class="btn btn-excel" onclick="exportTodayExcel()">📥 تصدير اليوم Excel</button>
+    <button class="btn btn-week" onclick="exportWeekExcel()">📅 تصدير الأسبوع Excel</button>
+  </div>
+</div>
+
+<div class="tabs-nav">
+  <button class="tab-btn active" onclick="switchTab('attendance',this)">📋 الغياب اليومي</button>
+  <button class="tab-btn" onclick="switchTab('phones',this)">📞 أرقام أولياء الأمور</button>
+</div>
+
+<script>
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(tab==='phones'&&window._renderPhonesSection)window._renderPhonesSection();
+}
+function loadAll(){if(window._loadAll)window._loadAll();}
+function changeWeek(d){if(window._changeWeek)window._changeWeek(d);}
+function exportTodayExcel(){if(window._exportTodayExcel)window._exportTodayExcel();}
+function exportWeekExcel(){if(window._exportWeekExcel)window._exportWeekExcel();}
+function printWeek(){if(window._printWeek)window._printWeek();}
+function togglePhonesBlock(uid){if(window._togglePhonesBlock)window._togglePhonesBlock(uid);}
+function savePhoneAdmin(s,id){if(window._savePhoneAdmin)window._savePhoneAdmin(s,id);}
+</script>
+
+<div id="tab-attendance" class="tab-content active">
+<div class="main">
+  <div class="day-summary">
+    <h2>📈 إجمالي اليوم</h2>
+    <div class="stats-row">
+      <div class="stat-card tot"><div class="stat-n" id="gAll">0</div><div class="stat-l">إجمالي الغياب</div></div>
+      <div class="stat-card lower"><div class="stat-n" id="gLower">0</div><div class="stat-l">المرحلة الدنيا</div></div>
+      <div class="stat-card upper"><div class="stat-n" id="gUpper">0</div><div class="stat-l">المرحلة العليا</div></div>
+    </div>
+  </div>
+
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">◀ الأسبوع السابق</button>
+    <div class="week-label" id="weekLabel">...</div>
+    <button onclick="changeWeek(1)">الأسبوع التالي ▶</button>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+
+  <div class="sections" id="sections">
+    <div class="empty-day">جارٍ التحميل...</div>
+  </div>
+</div>
+
+</div><!-- end main -->
+</div><!-- end tab-attendance -->
+
+<div id="tab-phones" class="tab-content">
+<div class="phones-section" id="phonesSection">
+  <div style="text-align:center;color:#aaa;padding:40px;">جارٍ التحميل...</div>
+</div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,get,set}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app=initializeApp({apiKey:"key",databaseURL:"https://school-attendance-24215-default-rtdb.firebaseio.com",projectId:"school-attendance-24215"});
+const db=getDatabase(app);
+
+// ===== بيانات المراحل =====
+const SM_LOWER=[
+  {id:'s1',name:'الأول ابتدائي',cls:['الصف الأول / 1','الصف الأول / 2','الصف الأول / 3','الصف الأول / 4']},
+  {id:'s2',name:'الثاني ابتدائي',cls:['الصف الثاني / 1','الصف الثاني / 2','الصف الثاني / 3','الصف الثاني / 4']},
+  {id:'s3',name:'الثالث ابتدائي',cls:['الصف الثالث / 1','الصف الثالث / 2','الصف الثالث / 3','الصف الثالث / 4']}
+];
+const SM_UPPER=[
+  {id:'s4',name:'الرابع ابتدائي',cls:['الصف الرابع / 1','الصف الرابع / 2','الصف الرابع / 3','الصف الرابع / 4','الصف الرابع / 5']},
+  {id:'s5',name:'الخامس ابتدائي',cls:['الصف الخامس / 1','الصف الخامس / 2','الصف الخامس / 3','الصف الخامس / 4']},
+  {id:'s6',name:'السادس ابتدائي',cls:['الصف السادس / 1','الصف السادس / 2','الصف السادس / 3','الصف السادس / 4']}
+];
+
+const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const DN_KEYS=['sun','mon','tue','wed','thu'];
+
+// متغيرات الحالة
+let currentWeekOffset=0;
+let currentDayIndex=0;
+let weekDays=[];
+let allData={};// {dayKey: {lower:{ST,ATT,noAbsent}, upper:{ST,ATT,noAbsent}}}
+
+function setSUI(s,m){
+  document.getElementById('sDot').className='sd '+s;
+  document.getElementById('sTxt').textContent=m;
+}
+
+function toH(date){
+  const y=date.getFullYear(),m=date.getMonth()+1,d=date.getDate();
+  const jd=Math.floor((1461*(y+4800+Math.floor((m-14)/12)))/4)+Math.floor((367*(m-2-12*(Math.floor((m-14)/12))))/12)-Math.floor((3*(Math.floor((y+4900+Math.floor((m-14)/12))/100)))/4)+d-32075;
+  let l=jd-1948440+10632;
+  const n=Math.floor((l-1)/10631);l=l-10631*n+354;
+  const j=(Math.floor((10985-l)/5316))*(Math.floor((50*l)/17719))+(Math.floor(l/5670))*(Math.floor((43*l)/15238));
+  l=l-(Math.floor((30-j)/15))*(Math.floor((17719*j)/50))-(Math.floor(j/16))*(Math.floor((15238*j)/43))+29;
+  const hm=Math.floor((24*l)/709);const hd=l-Math.floor((709*hm)/24)-2;
+  return{y:30*n+j-30,m:hm,d:hd<1?1:hd};
+}
+function hMo(m){return['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'][m-1]||'';}
+
+function getWeekDays(offset){
+  const now=new Date();
+  const day=now.getDay();
+  // أول يوم الأسبوع (الأحد)
+  const sunday=new Date(now);
+  sunday.setDate(now.getDate()-day+(offset*7));
+  const days=[];
+  for(let i=0;i<5;i++){
+    const d=new Date(sunday);
+    d.setDate(sunday.getDate()+i);
+    days.push(d);
+  }
+  return days;
+}
+
+function dateKey(d){return`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;}
+function lowerKey(d){return`lower_d_${dateKey(d)}`;}
+function upperKey(d){return`upper_d_${dateKey(d)}`;}
+function lowerStudentsKey(){return'lower_students_v1';}
+function upperStudentsKey(){return'upper_students_v1';}
+
+// تحميل بيانات الطلاب مرة واحدة
+let ST_LOWER={};
+let ST_UPPER={};
+
+async function loadStudents(){
+  try{
+    const [lSnap,uSnap]=await Promise.all([
+      get(ref(db,lowerStudentsKey())),
+      get(ref(db,upperStudentsKey()))
+    ]);
+    if(lSnap.exists())ST_LOWER=lSnap.val();
+    if(uSnap.exists())ST_UPPER=uSnap.val();
+  }catch(e){console.error('خطأ في تحميل الطلاب',e);}
+}
+
+async function loadDayData(date){
+  const dk=dateKey(date);
+  if(allData[dk])return allData[dk];
+  try{
+    const [lSnap,uSnap,lNoSnap,uNoSnap,lRepSnap,uRepSnap]=await Promise.all([
+      get(ref(db,lowerKey(date))),
+      get(ref(db,upperKey(date))),
+      get(ref(db,`lower_no_absent_${dk}`)),
+      get(ref(db,`upper_no_absent_${dk}`)),
+      get(ref(db,`daily_report_lower_${dk}`)),
+      get(ref(db,`daily_report_upper_${dk}`))
+    ]);
+    // الأولوية للكشف المرسل من كبير المعلمين
+    const lATT=lRepSnap.exists()&&lRepSnap.val().ATT?lRepSnap.val().ATT:(lSnap.exists()?lSnap.val():{});
+    const uATT=uRepSnap.exists()&&uRepSnap.val().ATT?uRepSnap.val().ATT:(uSnap.exists()?uSnap.val():{});
+    const lST=lRepSnap.exists()&&lRepSnap.val().ST?lRepSnap.val().ST:ST_LOWER;
+    const uST=uRepSnap.exists()&&uRepSnap.val().ST?uRepSnap.val().ST:ST_UPPER;
+    allData[dk]={
+      lower:{ATT:lATT,ST:lST,noAbsent:lNoSnap.exists()?lNoSnap.val():{},sent:lRepSnap.exists()},
+      upper:{ATT:uATT,ST:uST,noAbsent:uNoSnap.exists()?uNoSnap.val():{},sent:uRepSnap.exists()}
+    };
+  }catch(e){allData[dk]={lower:{ATT:{},ST:ST_LOWER,noAbsent:{},sent:false},upper:{ATT:{},ST:ST_UPPER,noAbsent:{},sent:false}};}
+  return allData[dk];
+}
+
+function getAbsentList(ST,ATT,sm){
+  const result={};
+  sm.forEach(sg=>{
+    result[sg.id]={name:sg.name,classes:{}};
+    sg.cls.forEach((cls,ci)=>{
+      const k=`c${ci}`;
+      const sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+      const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+      const absent=sts.filter(s=>att[s.id]===true);
+      result[sg.id].classes[k]={name:cls,students:absent};
+    });
+  });
+  return result;
+}
+
+// ===== أرقام أولياء الأمور =====
+let PHONES_LOWER={};
+let PHONES_UPPER={};
+
+async function loadAllPhones(){
+  try{
+    const [lSnap,uSnap]=await Promise.all([
+      get(ref(db,'phones_lower')),
+      get(ref(db,'phones_upper'))
+    ]);
+    if(lSnap.exists())PHONES_LOWER=lSnap.val();
+    if(uSnap.exists())PHONES_UPPER=uSnap.val();
+  }catch(e){}
+}
+
+async function savePhone(source,stid,p1,p2){
+  if(source==='lower'){
+    if(!PHONES_LOWER[stid])PHONES_LOWER[stid]={};
+    PHONES_LOWER[stid]={p1,p2};
+    await set(ref(db,'phones_lower'),PHONES_LOWER);
+  }else{
+    if(!PHONES_UPPER[stid])PHONES_UPPER[stid]={};
+    PHONES_UPPER[stid]={p1,p2};
+    await set(ref(db,'phones_upper'),PHONES_UPPER);
+  }
+}
+
+function toSaudiWA(phone){
+  phone=phone.replace(/\s/g,'');
+  if(phone.startsWith('05'))return '966'+phone.slice(1);
+  if(phone.startsWith('+966'))return phone.slice(1);
+  return phone;
+}
+
+window.switchTab=function(tab,btn){switchTab(tab,btn);};
+
+function renderPhonesSection(){
+  const cont=document.getElementById('phonesSection');
+  cont.innerHTML='';
+  
+  const stages=[
+    {label:'المرحلة الدنيا',cls:'lower',sm:SM_LOWER,ST:ST_LOWER,PHONES:PHONES_LOWER,source:'lower'},
+    {label:'المرحلة العليا',cls:'upper',sm:SM_UPPER,ST:ST_UPPER,PHONES:PHONES_UPPER,source:'upper'}
+  ];
+  
+  stages.forEach(stage=>{
+    const card=document.createElement('div');card.className='phones-stage';
+    let html=`<div class="phones-stage-head ${stage.cls}">${stage.label}</div>`;
+    stage.sm.forEach(sg=>{
+      sg.cls.forEach((cls,ci)=>{
+        const k=`c${ci}`;
+        const sts=stage.ST[sg.id]?stage.ST[sg.id][k]||[]:[];
+        const uid=`${stage.source}_${sg.id}_${k}`;
+        html+=`<div class="phones-cls">
+          <div class="phones-cls-title" onclick="togglePhonesBlock('${uid}')">${cls} <span>▾</span></div>
+          <div class="phones-cls-body" id="pb_${uid}">`;
+        sts.forEach(s=>{
+          const phones=stage.PHONES[s.id]||{p1:'',p2:''};
+          html+=`<div class="phone-row">
+            <span class="phone-name">${s.name}</span>
+            <input type="tel" class="phone-input" id="p1_${stage.source}_${s.id}" value="${phones.p1||''}" placeholder="رقم 1">
+            <input type="tel" class="phone-input" id="p2_${stage.source}_${s.id}" value="${phones.p2||''}" placeholder="رقم 2">
+            <button class="phone-save" onclick="savePhoneAdmin('${stage.source}','${s.id}')">حفظ</button>
+          </div>`;
+        });
+        html+=`</div></div>`;
+      });
+    });
+    card.innerHTML=html;
+    cont.appendChild(card);
+  });
+}
+
+window.togglePhonesBlock=function(uid){
+  const el=document.getElementById('pb_'+uid);
+  if(el)el.classList.toggle('open');
+};
+
+window.savePhoneAdmin=async function(source,stid){
+  const p1=document.getElementById(`p1_${source}_${stid}`).value.trim();
+  const p2=document.getElementById(`p2_${source}_${stid}`).value.trim();
+  await savePhone(source,stid,p1,p2);
+  showT('✅ تم حفظ الأرقام');
+};
+
+window.loadAll=async function(){
+  setSUI('syncing','جارٍ التحميل...');
+  await loadAllPhones();
+  weekDays=getWeekDays(currentWeekOffset);
+  
+  // تحديد اليوم الحالي
+  const today=new Date();
+  const todayDk=dateKey(today);
+  
+  // تحميل الطلاب
+  await loadStudents();
+  
+  // تحميل بيانات الأسبوع
+  for(const d of weekDays){await loadDayData(d);}
+  
+  // تحديد اليوم النشط
+  const todayIdx=weekDays.findIndex(d=>dateKey(d)===todayDk);
+  if(currentWeekOffset===0&&todayIdx>=0)currentDayIndex=todayIdx;
+  else if(currentDayIndex>=weekDays.length)currentDayIndex=0;
+  
+  setSUI('synced','محدّث ✅');
+  renderWeekNav();
+  renderDayTabs();
+  renderDay(currentDayIndex);
+  renderHeader();
+};
+
+function renderHeader(){
+  const now=new Date();
+  const h=toH(now);
+  document.getElementById('hDate').textContent=`${DN[now.getDay()]} ${h.d} ${hMo(h.m)} ${h.y}هـ`;
+}
+
+function renderWeekNav(){
+  const first=weekDays[0];
+  const last=weekDays[4];
+  const fmt=d=>`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  document.getElementById('weekLabel').textContent=
+    currentWeekOffset===0?`الأسبوع الحالي (${fmt(first)} – ${fmt(last)})`:
+    currentWeekOffset<0?`أسبوع سابق (${fmt(first)} – ${fmt(last)})`:
+    `أسبوع قادم (${fmt(first)} – ${fmt(last)})`;
+}
+
+function renderDayTabs(){
+  const tabs=document.getElementById('dayTabs');
+  tabs.innerHTML='';
+  weekDays.forEach((d,i)=>{
+    const btn=document.createElement('button');
+    btn.className=`day-tab${i===currentDayIndex?' active':''}`;
+    btn.textContent=`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    btn.onclick=()=>{currentDayIndex=i;renderDayTabs();renderDay(i);};
+    tabs.appendChild(btn);
+  });
+}
+
+window.printWeek=function(){
+  window.print();
+};
+
+function renderDay(idx){
+  const date=weekDays[idx];
+  const dk=dateKey(date);
+  const data=allData[dk]||{lower:{ATT:{},noAbsent:{}},upper:{ATT:{},noAbsent:{}}};
+  
+  const lAbsent=getAbsentList(ST_LOWER,data.lower.ATT,SM_LOWER);
+  const uAbsent=getAbsentList(ST_UPPER,data.upper.ATT,SM_UPPER);
+  
+  // حساب الإجمالي
+  let totalLower=0,totalUpper=0;
+  SM_LOWER.forEach(sg=>{Object.values(lAbsent[sg.id].classes).forEach(c=>{totalLower+=c.students.length;});});
+  SM_UPPER.forEach(sg=>{Object.values(uAbsent[sg.id].classes).forEach(c=>{totalUpper+=c.students.length;});});
+  
+  document.getElementById('gAll').textContent=totalLower+totalUpper;
+  document.getElementById('gLower').textContent=totalLower;
+  document.getElementById('gUpper').textContent=totalUpper;
+  
+  const cont=document.getElementById('sections');
+  cont.innerHTML='';
+
+  // زر واتساب جماعي لكل المراحل
+  const now2=new Date();
+  const ds=`${now2.getDate()}/${now2.getMonth()+1}/${now2.getFullYear()}`;
+  const dayName=DN[now2.getDay()]||'';
+  
+  // بناء رسالة الغياب الجماعي
+  function buildGroupMsg(stage, absent, sm){
+    let msg=`📋 *غياب ${stage} - ${dayName} ${ds}*\n\n`;
+    let total=0;
+    sm.forEach(sg=>{
+      sg.cls.forEach((cls,ci)=>{
+        const k=`c${ci}`;
+        const sts=absent[sg.id]?.classes[k]?.students||[];
+        if(sts.length>0){
+          msg+=`*${cls}* (${sts.length}):\n`;
+          sts.forEach((s,i)=>{msg+=`${i+1}. ${s.name}\n`;});
+          msg+='\n';
+          total+=sts.length;
+        }
+      });
+    });
+    msg+=`📊 الإجمالي: ${total} غائب`;
+    return msg;
+  }
+
+  const lGroupMsg=buildGroupMsg('المرحلة الدنيا',lAbsent,SM_LOWER);
+  const uGroupMsg=buildGroupMsg('المرحلة العليا',uAbsent,SM_UPPER);
+  const allGroupMsg=buildGroupMsg('الكل',{...lAbsent,...uAbsent},[...SM_LOWER,...SM_UPPER]);
+
+  const groupBtns=document.createElement('div');
+  groupBtns.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;';
+  groupBtns.innerHTML=`
+    <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(allGroupMsg)}','_blank')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#25d366;color:#fff;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;">📱 واتساب جماعي - الكل</button>
+    <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(lGroupMsg)}','_blank')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#e63946;color:#fff;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;">📱 واتساب - الدنيا</button>
+    <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(uGroupMsg)}','_blank')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#2d6a4f;color:#fff;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;">📱 واتساب - العليا</button>
+  `;
+  cont.appendChild(groupBtns);
+  
+  // المرحلة الدنيا
+  const lCard=document.createElement('div');lCard.className='section-card';
+  let lBody='';
+  SM_LOWER.forEach(sg=>{
+    lBody+=`<div class="cls-block">`;
+    sg.cls.forEach((cls,ci)=>{
+      const k=`c${ci}`;
+      const info=lAbsent[sg.id].classes[k];
+      const noAbs=data.lower.noAbsent&&data.lower.noAbsent[sg.id]&&data.lower.noAbsent[sg.id][k];
+      lBody+=`<div class="cls-title">${cls} <span>غياب: ${info.students.length}</span></div>`;
+      if(noAbs){
+        lBody+=`<div class="confirmed-no-absent">✅ لا يوجد غياب (مؤكد)</div>`;
+      }else if(info.students.length===0){
+        lBody+=`<div class="not-reported">لم يُرسل بعد</div>`;
+      }else{
+        info.students.forEach((s,i)=>{
+          const phones=PHONES_LOWER[s.id]||{p1:'',p2:''};
+          const now2=new Date();
+          const ds=`${now2.getDate()}/${now2.getMonth()+1}/${now2.getFullYear()}`;
+          const msg=encodeURIComponent(`السلام عليكم، نُحيطكم علماً بأن ابنكم *${s.name}* غائب اليوم ${ds}. إدارة المدرسة`);
+          const smsMsg=encodeURIComponent(`غياب: ${s.name} بتاريخ ${ds}`);
+          let btns='<div class="absent-contact">';
+          if(phones.p1){const wa=toSaudiWA(phones.p1);btns+=`<button class="wa-btn" onclick="window.open('https://wa.me/${wa}?text=${msg}','_blank')">📱 واتساب</button><button class="sms-btn" onclick="window.location.href='sms:${phones.p1}?body=${smsMsg}'">✉️ SMS</button>`;}
+          if(phones.p2){const wa=toSaudiWA(phones.p2);btns+=`<button class="wa-btn" onclick="window.open('https://wa.me/${wa}?text=${msg}','_blank')">📱 واتساب 2</button><button class="sms-btn" onclick="window.location.href='sms:${phones.p2}?body=${smsMsg}'">✉️ SMS 2</button>`;}
+          btns+='</div>';
+          lBody+=`<div class="stu-item"><span class="stu-num">${i+1}</span><div style="flex:1">${s.name}${btns}</div></div>`;
+        });
+      }
+    });
+    lBody+=`</div>`;
+  });
+  lCard.innerHTML=`<div class="section-head lower">📚 المرحلة الدنيا (1-3) <span>غياب: ${totalLower}</span></div><div class="section-body">${lBody}</div>`;
+  cont.appendChild(lCard);
+  
+  // المرحلة العليا
+  const uCard=document.createElement('div');uCard.className='section-card';
+  let uBody='';
+  SM_UPPER.forEach(sg=>{
+    uBody+=`<div class="cls-block">`;
+    sg.cls.forEach((cls,ci)=>{
+      const k=`c${ci}`;
+      const info=uAbsent[sg.id].classes[k];
+      const noAbs=data.upper.noAbsent&&data.upper.noAbsent[sg.id]&&data.upper.noAbsent[sg.id][k];
+      uBody+=`<div class="cls-title">${cls} <span>غياب: ${info.students.length}</span></div>`;
+      if(noAbs){
+        uBody+=`<div class="confirmed-no-absent">✅ لا يوجد غياب (مؤكد)</div>`;
+      }else if(info.students.length===0){
+        uBody+=`<div class="not-reported">لم يُرسل بعد</div>`;
+      }else{
+        info.students.forEach((s,i)=>{
+          const phones=PHONES_UPPER[s.id]||{p1:'',p2:''};
+          const now2=new Date();
+          const ds=`${now2.getDate()}/${now2.getMonth()+1}/${now2.getFullYear()}`;
+          const msg=encodeURIComponent(`السلام عليكم، نُحيطكم علماً بأن ابنكم *${s.name}* غائب اليوم ${ds}. إدارة المدرسة`);
+          const smsMsg=encodeURIComponent(`غياب: ${s.name} بتاريخ ${ds}`);
+          let btns='<div class="absent-contact">';
+          if(phones.p1){const wa=toSaudiWA(phones.p1);btns+=`<button class="wa-btn" onclick="window.open('https://wa.me/${wa}?text=${msg}','_blank')">📱 واتساب</button><button class="sms-btn" onclick="window.location.href='sms:${phones.p1}?body=${smsMsg}'">✉️ SMS</button>`;}
+          if(phones.p2){const wa=toSaudiWA(phones.p2);btns+=`<button class="wa-btn" onclick="window.open('https://wa.me/${wa}?text=${msg}','_blank')">📱 واتساب 2</button><button class="sms-btn" onclick="window.location.href='sms:${phones.p2}?body=${smsMsg}'">✉️ SMS 2</button>`;}
+          btns+='</div>';
+          uBody+=`<div class="stu-item"><span class="stu-num">${i+1}</span><div style="flex:1">${s.name}${btns}</div></div>`;
+        });
+      }
+    });
+    uBody+=`</div>`;
+  });
+  uCard.innerHTML=`<div class="section-head upper">📚 المرحلة العليا (4-6) <span>غياب: ${totalUpper}</span></div><div class="section-body">${uBody}</div>`;
+  cont.appendChild(uCard);
+}
+
+window.changeWeek=function(dir){
+  currentWeekOffset+=dir;
+  currentDayIndex=0;
+  allData={};
+  loadAll();
+};
+
+// ===== تصدير Excel اليوم =====
+window.exportTodayExcel=function(){
+  const date=weekDays[currentDayIndex];
+  const dk=dateKey(date);
+  const data=allData[dk]||{lower:{ATT:{},noAbsent:{}},upper:{ATT:{},noAbsent:{}}};
+  const wb=XLSX.utils.book_new();
+  const dayName=`${DN[date.getDay()]} ${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`;
+
+  // كل فصل ورقة
+  [...SM_LOWER,...SM_UPPER].forEach(sg=>{
+    const isLower=SM_LOWER.find(s=>s.id===sg.id);
+    const ST=isLower?ST_LOWER:ST_UPPER;
+    const ATT=isLower?data.lower.ATT:data.upper.ATT;
+    const noAbsent=isLower?data.lower.noAbsent:data.upper.noAbsent;
+
+    sg.cls.forEach((cls,ci)=>{
+      const k=`c${ci}`;
+      const sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+      const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+      const noAbs=noAbsent&&noAbsent[sg.id]&&noAbsent[sg.id][k];
+      const absent=sts.filter(s=>att[s.id]===true);
+
+      const rows=[['#','اسم الطالب','الملاحظة']];
+      if(noAbs){rows.push(['—','لا يوجد غياب','مؤكد من المعلم']);}
+      else if(absent.length===0){rows.push(['—','لا يوجد غياب مسجل','']);}
+      else{absent.forEach((s,i)=>rows.push([i+1,s.name,dayName]));}
+
+      const ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:5},{wch:40},{wch:20}];
+      const sheetName=cls.replace(/\//g,'-').slice(0,31);
+      XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    });
+  });
+
+  XLSX.writeFile(wb,`غياب_${DN[date.getDay()]}_${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}.xlsx`);
+  showT('تم تصدير ملف Excel ✅');
+};
+
+// ===== تصدير Excel الأسبوع =====
+window.exportWeekExcel=async function(){
+  showT('جارٍ تجهيز ملف الأسبوع...');
+  // تأكد من تحميل كل الأيام
+  for(const d of weekDays){await loadDayData(d);}
+
+  const wb=XLSX.utils.book_new();
+  const allClasses=[];
+  SM_LOWER.forEach(sg=>sg.cls.forEach((cls,ci)=>allClasses.push({sg,ci,cls,isLower:true})));
+  SM_UPPER.forEach(sg=>sg.cls.forEach((cls,ci)=>allClasses.push({sg,ci,cls,isLower:false})));
+
+  allClasses.forEach(({sg,ci,cls,isLower})=>{
+    const k=`c${ci}`;
+    const ST=isLower?ST_LOWER:ST_UPPER;
+    const sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+
+    // أعمدة: الاسم + كل يوم
+    const header=['#','اسم الطالب'];
+    weekDays.forEach(d=>header.push(`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`));
+    header.push('إجمالي الغياب');
+
+    const rows=[header];
+    sts.forEach((s,idx)=>{
+      const row=[idx+1,s.name];
+      let total=0;
+      weekDays.forEach(d=>{
+        const dk=dateKey(d);
+        const data=allData[dk]||{lower:{ATT:{},noAbsent:{}},upper:{ATT:{},noAbsent:{}}};
+        const ATT=isLower?data.lower.ATT:data.upper.ATT;
+        const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+        const absent=att[s.id]===true;
+        if(absent)total++;
+        row.push(absent?'غ':'');
+      });
+      row.push(total);
+      rows.push(row);
+    });
+
+    // سطر إجمالي
+    const totRow=['','الإجمالي'];
+    weekDays.forEach(d=>{
+      const dk=dateKey(d);
+      const data=allData[dk]||{lower:{ATT:{},noAbsent:{}},upper:{ATT:{},noAbsent:{}}};
+      const ATT=isLower?data.lower.ATT:data.upper.ATT;
+      const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
+      totRow.push(sts.filter(s=>att[s.id]===true).length);
+    });
+    totRow.push('');
+    rows.push(totRow);
+
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:5},{wch:40},...weekDays.map(()=>({wch:14})),{wch:14}];
+    const sheetName=cls.replace(/\//g,'-').slice(0,31);
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  });
+
+  const first=weekDays[0];
+  const last=weekDays[4];
+  XLSX.writeFile(wb,`غياب_أسبوعي_${first.getDate()}-${first.getMonth()+1}_إلى_${last.getDate()}-${last.getMonth()+1}-${last.getFullYear()}.xlsx`);
+  showT('تم تصدير ملف الأسبوع ✅');
+};
+
+function showT(msg){const t=document.getElementById('tst');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// تسجيل الدوال عالمياً
+window._loadAll=loadAll;
+window.loadAll=loadAll;
+window._changeWeek=changeWeek;
+window._exportTodayExcel=exportTodayExcel;
+window._exportWeekExcel=exportWeekExcel;
+window._printWeek=printWeek;
+window._togglePhonesBlock=togglePhonesBlock;
+window._savePhoneAdmin=savePhoneAdmin;
+window._renderPhonesSection=renderPhonesSection;
+
+// ===== أرشفة تلقائية - شهر =====
+async function archiveOldData(){
+  try{
+    const now=new Date();
+    const cutoff=new Date(now);
+    cutoff.setDate(cutoff.getDate()-30); // شهر = 30 يوم
+
+    // قراءة مفاتيح Firebase القديمة وحذفها
+    const prefixes=['lower_d_','upper_d_','lower_no_absent_','upper_no_absent_','daily_report_lower_','daily_report_upper_'];
+    
+    // إنشاء قائمة الأيام الـ 30 الماضية للاحتفاظ بها
+    const keepDates=new Set();
+    for(let i=0;i<=30;i++){
+      const d=new Date(now);
+      d.setDate(d.getDate()-i);
+      keepDates.add(`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`);
+    }
+
+    // حفظ تاريخ آخر أرشفة
+    const lastArchive=localStorage.getItem('lastArchive');
+    const today=`${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
+    
+    if(lastArchive===today)return; // تم الأرشفة اليوم بالفعل
+    
+    localStorage.setItem('lastArchive',today);
+    showT('🗂️ جارٍ أرشفة البيانات القديمة...');
+    
+    // حذف البيانات التي مضى عليها أكثر من 30 يوم
+    let deleted=0;
+    for(let i=31;i<=365;i++){
+      const d=new Date(now);
+      d.setDate(d.getDate()-i);
+      const dk=`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+      for(const prefix of prefixes){
+        try{
+          const snap=await get(ref(db,`${prefix}${dk}`));
+          if(snap.exists()){
+            await set(ref(db,`${prefix}${dk}`),null);
+            deleted++;
+          }
+        }catch(e){}
+      }
+    }
+    
+    if(deleted>0)showT(`✅ تم أرشفة ${deleted} سجل قديم`);
+    
+  }catch(e){console.error('خطأ في الأرشفة',e);}
+}
+
+// تشغيل
+loadAll();
+// تحديث تلقائي كل 5 دقائق
+setInterval(()=>{allData={};loadAll();},5*60*1000);
+// أرشفة عند فتح الصفحة
+setTimeout(archiveOldData, 3000);
+</script>
+</body>
+</html>
