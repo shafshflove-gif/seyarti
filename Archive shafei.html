@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أرشيف الغياب – مدرسة عمورية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Tajawal',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;}
+
+/* Header */
+header{background:linear-gradient(135deg,#161b22,#21262d);border-bottom:1px solid #30363d;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#238636,#2ea043);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.logo-text h1{color:#f0f6fc;font-size:1.1rem;font-weight:900;}
+.logo-text p{color:#8b949e;font-size:.75rem;margin-top:2px;}
+.hbadge{background:rgba(35,134,54,.15);border:1px solid #238636;color:#3fb950;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:20px;}
+
+/* Month Selector */
+.month-selector{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;margin:20px;}
+.ms-title{font-size:.9rem;font-weight:800;color:#f0f6fc;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.month-card{background:#21262d;border:1.5px solid #30363d;border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;text-align:center;}
+.month-card:hover{border-color:#238636;background:#1c2a1e;}
+.month-card.selected{border-color:#2ea043;background:linear-gradient(135deg,#1c2a1e,#162116);box-shadow:0 0 0 1px #238636;}
+.month-card.selected .mc-name{color:#3fb950;}
+.mc-name{font-size:.82rem;font-weight:800;color:#c9d1d9;margin-bottom:2px;}
+.mc-year{font-size:.68rem;color:#8b949e;}
+.mc-check{width:18px;height:18px;border-radius:50%;border:2px solid #30363d;margin:6px auto 0;display:flex;align-items:center;justify-content:center;font-size:.65rem;}
+.month-card.selected .mc-check{background:#238636;border-color:#238636;color:#fff;}
+
+.year-selector{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.year-selector label{font-size:.8rem;font-weight:700;color:#8b949e;}
+.year-selector select{background:#21262d;border:1.5px solid #30363d;color:#f0f6fc;border-radius:8px;padding:6px 10px;font-family:'Tajawal',sans-serif;font-size:.82rem;outline:none;cursor:pointer;}
+.year-selector select:focus{border-color:#238636;}
+
+.ms-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.btn{padding:9px 18px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .18s;}
+.btn-load{background:linear-gradient(135deg,#238636,#2ea043);color:#fff;}
+.btn-load:hover{background:linear-gradient(135deg,#2ea043,#3fb950);}
+.btn-load:disabled{background:#21262d;color:#8b949e;cursor:not-allowed;}
+.btn-excel{background:#1b5e20;color:#fff;border:1px solid #2ea043;}
+.btn-clear{background:#21262d;color:#8b949e;border:1px solid #30363d;}
+
+/* Stats */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 20px 20px;}
+.stat-box{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px;text-align:center;}
+.stat-box.highlight{border-color:#238636;background:linear-gradient(135deg,#161b22,#1c2a1e);}
+.sb-num{font-size:2rem;font-weight:900;line-height:1;color:#f0f6fc;}
+.sb-num.green{color:#3fb950;}
+.sb-num.red{color:#f85149;}
+.sb-num.yellow{color:#d29922;}
+.sb-label{font-size:.65rem;font-weight:700;color:#8b949e;margin-top:4px;}
+
+/* Filter */
+.filter-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 16px;margin:0 20px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-bar label{font-size:.78rem;font-weight:700;color:#8b949e;}
+.filter-bar select,.filter-bar input{background:#21262d;border:1.5px solid #30363d;color:#f0f6fc;border-radius:8px;padding:6px 10px;font-family:'Tajawal',sans-serif;font-size:.8rem;outline:none;}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#238636;}
+.filter-bar input{flex:1;min-width:140px;}
+
+/* Results */
+.results{margin:0 20px 20px;}
+.month-section{margin-bottom:20px;}
+.month-header{background:linear-gradient(90deg,#1c2a1e,#161b22);border:1px solid #238636;border-radius:12px 12px 0 0;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.mh-title{font-size:.95rem;font-weight:900;color:#3fb950;}
+.mh-stats{display:flex;gap:10px;}
+.mh-stat{background:rgba(35,134,54,.1);border:1px solid rgba(35,134,54,.3);border-radius:8px;padding:3px 10px;font-size:.72rem;font-weight:700;color:#3fb950;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border:1px solid #30363d;border-top:none;border-radius:0 0 12px 12px;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead tr{background:#21262d;}
+th{padding:9px 12px;text-align:right;font-weight:800;color:#8b949e;border-bottom:1px solid #30363d;white-space:nowrap;}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#1c2128;}
+.td-name{font-weight:700;color:#f0f6fc;}
+.td-cls{background:#1c2a1e;color:#3fb950;border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:700;display:inline-block;}
+.td-days{font-weight:900;font-size:.95rem;}
+.td-days.high{color:#f85149;}
+.td-days.med{color:#d29922;}
+.td-days.low{color:#3fb950;}
+.td-dates{color:#8b949e;font-size:.7rem;direction:ltr;text-align:left;}
+.absent-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;vertical-align:middle;}
+.ad-absent{background:#f85149;}
+.ad-present{background:#238636;}
+
+/* Day grid */
+.day-grid{display:flex;flex-wrap:wrap;gap:3px;}
+
+/* Empty state */
+.empty{text-align:center;padding:40px;color:#8b949e;}
+.empty-icon{font-size:2.5rem;margin-bottom:10px;}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:#8b949e;}
+.spinner{width:32px;height:32px;border:3px solid #30363d;border-top-color:#238636;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#238636;color:#fff;padding:10px 22px;border-radius:24px;font-size:.83rem;font-weight:700;z-index:9999;transition:transform .25s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.section-toggle{background:none;border:none;color:#8b949e;cursor:pointer;font-size:.8rem;font-family:'Tajawal',sans-serif;}
+.section-toggle:hover{color:#3fb950;}
+
+/* Top absentees */
+.top-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px;margin:0 20px 16px;}
+.top-title{font-size:.85rem;font-weight:800;color:#f0f6fc;margin-bottom:10px;}
+.top-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #21262d;}
+.top-item:last-child{border-bottom:none;}
+.top-rank{width:22px;height:22px;border-radius:50%;background:#21262d;color:#8b949e;font-size:.7rem;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.top-rank.r1{background:#d29922;color:#fff;}
+.top-rank.r2{background:#8b949e;color:#fff;}
+.top-rank.r3{background:#c9580a;color:#fff;}
+.top-name{flex:1;font-size:.8rem;font-weight:700;color:#f0f6fc;}
+.top-cls{font-size:.68rem;color:#8b949e;}
+.top-count{font-size:.9rem;font-weight:900;color:#f85149;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <div class="logo-text">
+      <h1>أرشيف الغياب</h1>
+      <p>مدرسة عمورية الابتدائية</p>
+    </div>
+  </div>
+  <div class="hbadge" id="hbadge">اختر الأشهر</div>
+</header>
+
+<!-- Month Selector -->
+<div class="month-selector">
+  <div class="ms-title">📅 اختر الأشهر (حتى 3 أشهر)</div>
+  <div class="year-selector">
+    <label>السنة الميلادية:</label>
+    <select id="yearSel" onchange="buildMonthGrid()"></select>
+  </div>
+  <div class="ms-grid" id="monthGrid"></div>
+  <div class="ms-actions">
+    <button class="btn btn-load" id="loadBtn" onclick="loadArchive()" disabled>🔍 تحميل الأرشيف</button>
+    <button class="btn btn-excel" id="excelBtn" onclick="exportExcel()" style="display:none">📥 تصدير Excel</button>
+    <button class="btn btn-clear" onclick="clearSelection()">✕ مسح</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="statsBar" style="display:none;">
+  <div class="stat-box highlight">
+    <div class="sb-num green" id="stTotal">0</div>
+    <div class="sb-label">إجمالي حالات الغياب</div>
+  </div>
+  <div class="stat-box">
+    <div class="sb-num red" id="stDays">0</div>
+    <div class="sb-label">أيام مُحللة</div>
+  </div>
+  <div class="stat-box">
+    <div class="sb-num yellow" id="stStudents">0</div>
+    <div class="sb-label">طلاب غابوا</div>
+  </div>
+  <div class="stat-box">
+    <div class="sb-num" id="stAvg">0</div>
+    <div class="sb-label">متوسط يومي</div>
+  </div>
+</div>
+
+<!-- Top Absentees -->
+<div class="top-section" id="topSection" style="display:none;">
+  <div class="top-title">🏆 الأكثر غياباً في الفترة</div>
+  <div id="topList"></div>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar" id="filterBar" style="display:none;">
+  <label>تصفية:</label>
+  <select id="fGrade" onchange="applyFilter()">
+    <option value="">كل الصفوف</option>
+    <option value="s1">الأول</option><option value="s2">الثاني</option><option value="s3">الثالث</option>
+    <option value="s4">الرابع</option><option value="s5">الخامس</option><option value="s6">السادس</option>
+  </select>
+  <select id="fSection" onchange="applyFilter()">
+    <option value="">كل الأقسام</option>
+    <option value="lower">المرحلة الدنيا</option>
+    <option value="upper">المرحلة العليا</option>
+  </select>
+  <input type="text" id="fSearch" placeholder="🔍 ابحث باسم الطالب..." oninput="applyFilter()">
+</div>
+
+<!-- Results -->
+<div class="results" id="results">
+  <div class="empty"><div class="empty-icon">📂</div><div>اختر الأشهر واضغط تحميل</div></div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,get}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app=initializeApp({apiKey:"key",databaseURL:"https://school-attendance-24215-default-rtdb.firebaseio.com",projectId:"school-attendance-24215"});
+const db=getDatabase(app);
+
+const SML=[
+  {id:'s1',name:'الأول',cls:['الأول/1','الأول/2','الأول/3','الأول/4']},
+  {id:'s2',name:'الثاني',cls:['الثاني/1','الثاني/2','الثاني/3','الثاني/4']},
+  {id:'s3',name:'الثالث',cls:['الثالث/1','الثالث/2','الثالث/3','الثالث/4']}
+];
+const SMU=[
+  {id:'s4',name:'الرابع',cls:['الرابع/1','الرابع/2','الرابع/3','الرابع/4','الرابع/5']},
+  {id:'s5',name:'الخامس',cls:['الخامس/1','الخامس/2','الخامس/3','الخامس/4']},
+  {id:'s6',name:'السادس',cls:['السادس/1','السادس/2','السادس/3','السادس/4']}
+];
+const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+
+let selectedMonths=new Set();
+let STL={},STU={};
+let archiveData={};// key: "YYYY_M" => [{name,cls,grade,days:[dates]}]
+let allAbsences=[];// flat list for filtering
+
+// ===== Year/Month UI =====
+window.buildMonthGrid=function(){
+  const yr=+document.getElementById('yearSel').value;
+  const grid=document.getElementById('monthGrid');
+  grid.innerHTML='';
+  MONTHS_AR.forEach((m,i)=>{
+    const key=`${yr}_${i+1}`;
+    const div=document.createElement('div');
+    div.className=`month-card${selectedMonths.has(key)?' selected':''}`;
+    div.dataset.key=key;
+    div.innerHTML=`<div class="mc-name">${m}</div><div class="mc-year">${yr}</div><div class="mc-check">${selectedMonths.has(key)?'✓':''}</div>`;
+    div.onclick=()=>toggleMonth(key,div);
+    grid.appendChild(div);
+  });
+};
+
+function toggleMonth(key,el){
+  if(selectedMonths.has(key)){
+    selectedMonths.delete(key);
+    el.classList.remove('selected');
+    el.querySelector('.mc-check').textContent='';
+  }else{
+    if(selectedMonths.size>=3){showT('يمكن اختيار 3 أشهر كحد أقصى');return;}
+    selectedMonths.add(key);
+    el.classList.add('selected');
+    el.querySelector('.mc-check').textContent='✓';
+  }
+  document.getElementById('loadBtn').disabled=selectedMonths.size===0;
+  updateBadge();
+}
+
+function updateBadge(){
+  const b=document.getElementById('hbadge');
+  if(!selectedMonths.size){b.textContent='اختر الأشهر';return;}
+  const labels=[...selectedMonths].map(k=>{const[y,m]=k.split('_');return`${MONTHS_AR[+m-1]} ${y}`;});
+  b.textContent=labels.join(' • ');
+}
+
+window.clearSelection=function(){
+  selectedMonths.clear();
+  buildMonthGrid();
+  document.getElementById('loadBtn').disabled=true;
+  updateBadge();
+  document.getElementById('results').innerHTML='<div class="empty"><div class="empty-icon">📂</div><div>اختر الأشهر واضغط تحميل</div></div>';
+  document.getElementById('statsBar').style.display='none';
+  document.getElementById('topSection').style.display='none';
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('excelBtn').style.display='none';
+};
+
+// ===== Load =====
+async function loadStudents(){
+  if(Object.keys(STL).length)return;
+  const[l,u]=await Promise.all([get(ref(db,'lower_students_v1')),get(ref(db,'upper_students_v1'))]);
+  if(l.exists())STL=l.val();if(u.exists())STU=u.val();
+}
+
+function getWorkDays(year,month){
+  // الأيام من الأحد إلى الخميس في الشهر
+  const days=[];
+  const d=new Date(year,month-1,1);
+  while(d.getMonth()===month-1){
+    const wd=d.getDay();
+    if(wd>=0&&wd<=4)days.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return days;
+}
+
+window.loadArchive=async function(){
+  if(!selectedMonths.size)return;
+  const btn=document.getElementById('loadBtn');
+  btn.disabled=true;btn.textContent='⏳ جارٍ التحميل...';
+  document.getElementById('results').innerHTML='<div class="loading"><div class="spinner"></div><div>جارٍ تحميل بيانات الغياب...</div></div>';
+
+  try{
+    await loadStudents();
+    archiveData={};allAbsences=[];
+
+    for(const mk of selectedMonths){
+      const[yr,mo]=[+mk.split('_')[0],+mk.split('_')[1]];
+      const days=getWorkDays(yr,mo);
+      // تحميل كل أيام الشهر
+      const dayData={};
+      await Promise.all(days.map(async d=>{
+        const key=`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+        try{
+          const[ls,us]=await Promise.all([get(ref(db,`lower_d_${key}`)),get(ref(db,`upper_d_${key}`))]);
+          dayData[key]={lower:ls.exists()?ls.val():{},upper:us.exists()?us.val():{}};
+        }catch(e){dayData[key]={lower:{},upper:{}};}
+      }));
+
+      // بناء سجل الغياب لكل طالب
+      const studentMap={};
+      const processSM=(sm,ST,section)=>{
+        sm.forEach(sg=>{
+          sg.cls.forEach((cls,ci)=>{
+            const k=`c${ci}`;
+            const sts=ST[sg.id]?ST[sg.id][k]||[]:[];
+            sts.forEach((s,idx)=>{
+              const sid=`${sg.id}_${ci}_${idx}`;
+              if(!studentMap[sid])studentMap[sid]={name:s.name,cls,grade:sg.id,section,absDays:[]};
+              days.forEach(d=>{
+                const dk=`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+                const att=section==='lower'?(dayData[dk].lower[sg.id]?dayData[dk].lower[sg.id][k]||{}:{}):(dayData[dk].upper[sg.id]?dayData[dk].upper[sg.id][k]||{}:{});
+                if(att[s.id]===true)studentMap[sid].absDays.push(d);
+              });
+            });
+          });
+        });
+      };
+      processSM(SML,STL,'lower');
+      processSM(SMU,STU,'upper');
+
+      archiveData[mk]={studentMap,days,yr,mo};
+      // أضف للقائمة الكاملة
+      Object.values(studentMap).forEach(s=>{
+        if(s.absDays.length>0)allAbsences.push({...s,month:mk,monthLabel:`${MONTHS_AR[mo-1]} ${yr}`});
+      });
+    }
+
+    renderStats();
+    renderTopAbsentees();
+    applyFilter();
+    document.getElementById('statsBar').style.display='grid';
+    document.getElementById('topSection').style.display='block';
+    document.getElementById('filterBar').style.display='flex';
+    document.getElementById('excelBtn').style.display='inline-block';
+    showT('✅ تم تحميل الأرشيف');
+  }catch(e){
+    document.getElementById('results').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div>حدث خطأ في التحميل</div></div>';
+    showT('خطأ في التحميل');
+  }
+  btn.disabled=false;btn.textContent='🔍 تحميل الأرشيف';
+};
+
+function renderStats(){
+  let total=0,uniqueStudents=new Set(),totalDays=0;
+  for(const mk of selectedMonths){
+    const{studentMap,days}=archiveData[mk];
+    totalDays+=days.length;
+    Object.values(studentMap).forEach(s=>{
+      if(s.absDays.length){total+=s.absDays.length;uniqueStudents.add(s.name);}
+    });
+  }
+  document.getElementById('stTotal').textContent=total;
+  document.getElementById('stDays').textContent=totalDays;
+  document.getElementById('stStudents').textContent=uniqueStudents.size;
+  document.getElementById('stAvg').textContent=totalDays?Math.round(total/totalDays):0;
+}
+
+function renderTopAbsentees(){
+  // اجمع إجمالي غياب كل طالب عبر كل الأشهر
+  const totals={};
+  allAbsences.forEach(s=>{
+    const k=`${s.name}_${s.cls}`;
+    if(!totals[k])totals[k]={name:s.name,cls:s.cls,total:0};
+    totals[k].total+=s.absDays.length;
+  });
+  const sorted=Object.values(totals).sort((a,b)=>b.total-a.total).slice(0,5);
+  const list=document.getElementById('topList');
+  if(!sorted.length){list.innerHTML='<div style="color:#8b949e;font-size:.8rem">لا يوجد بيانات</div>';return;}
+  list.innerHTML=sorted.map((s,i)=>`
+    <div class="top-item">
+      <div class="top-rank ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}</div>
+      <div style="flex:1"><div class="top-name">${s.name}</div><div class="top-cls">${s.cls}</div></div>
+      <div class="top-count">${s.total} يوم</div>
+    </div>`).join('');
+}
+
+window.applyFilter=function(){
+  const grade=document.getElementById('fGrade').value;
+  const section=document.getElementById('fSection').value;
+  const search=document.getElementById('fSearch').value.trim();
+  const res=document.getElementById('results');
+
+  if(!Object.keys(archiveData).length){
+    res.innerHTML='<div class="empty"><div class="empty-icon">📂</div><div>اختر الأشهر واضغط تحميل</div></div>';
+    return;
+  }
+
+  let html='';
+  let hasAny=false;
+
+  for(const mk of selectedMonths){
+    const{studentMap,days,yr,mo}=archiveData[mk];
+    const label=`${MONTHS_AR[mo-1]} ${yr}`;
+    // فلتر
+    const filtered=Object.values(studentMap).filter(s=>{
+      if(!s.absDays.length)return false;
+      if(grade&&s.grade!==grade)return false;
+      if(section&&s.section!==section)return false;
+      if(search&&!s.name.includes(search))return false;
+      return true;
+    }).sort((a,b)=>b.absDays.length-a.absDays.length);
+
+    const totalAbs=filtered.reduce((sum,s)=>sum+s.absDays.length,0);
+
+    html+=`<div class="month-section">
+      <div class="month-header">
+        <div class="mh-title">📅 ${label}</div>
+        <div class="mh-stats">
+          <span class="mh-stat">أيام الدراسة: ${days.length}</span>
+          <span class="mh-stat">حالات الغياب: ${totalAbs}</span>
+          <span class="mh-stat">طلاب غائبون: ${filtered.length}</span>
+        </div>
+      </div>`;
+
+    if(!filtered.length){
+      html+=`<div class="tbl-wrap"><div class="empty" style="padding:20px">لا توجد بيانات غياب مطابقة</div></div>`;
+    }else{
+      hasAny=true;
+      html+=`<div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>#</th><th>اسم الطالب</th><th>الفصل</th><th>أيام الغياب</th><th>التواريخ</th>
+        </tr></thead><tbody>`;
+      filtered.forEach((s,i)=>{
+        const cls=s.absDays.length>=5?'high':s.absDays.length>=3?'med':'low';
+        const dates=s.absDays.map(d=>`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`).join('، ');
+        // مربعات الأيام
+        const dayDots=days.map(d=>{
+          const isAbs=s.absDays.some(ad=>ad.toDateString()===d.toDateString());
+          return`<span class="absent-dot ${isAbs?'ad-absent':'ad-present'}" title="${d.getDate()}/${d.getMonth()+1}"></span>`;
+        }).join('');
+        html+=`<tr>
+          <td>${i+1}</td>
+          <td class="td-name">${s.name}</td>
+          <td><span class="td-cls">${s.cls}</span></td>
+          <td><span class="td-days ${cls}">${s.absDays.length}</span></td>
+          <td><div class="day-grid">${dayDots}</div><div class="td-dates">${dates}</div></td>
+        </tr>`;
+      });
+      html+=`</tbody></table></div>`;
+    }
+    html+=`</div>`;
+  }
+
+  res.innerHTML=html||'<div class="empty"><div class="empty-icon">🔍</div><div>لا توجد نتائج مطابقة</div></div>';
+};
+
+// ===== Excel Export =====
+window.exportExcel=function(){
+  if(!Object.keys(archiveData).length){showT('لا توجد بيانات');return;}
+  const wb=XLSX.utils.book_new();
+  for(const mk of selectedMonths){
+    const{studentMap,days,yr,mo}=archiveData[mk];
+    const label=`${MONTHS_AR[mo-1]} ${yr}`;
+    const hdr=['#','اسم الطالب','الفصل','المرحلة','أيام الغياب','التواريخ'];
+    const rows=[hdr];
+    const filtered=Object.values(studentMap).filter(s=>s.absDays.length>0).sort((a,b)=>b.absDays.length-a.absDays.length);
+    filtered.forEach((s,i)=>{
+      const dates=s.absDays.map(d=>`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`).join(' - ');
+      rows.push([i+1,s.name,s.cls,s.section==='lower'?'دنيا':'عليا',s.absDays.length,dates]);
+    });
+    // ملخص
+    rows.push([]);
+    rows.push(['إجمالي حالات الغياب',filtered.reduce((s,r)=>s+r.absDays.length,0)]);
+    rows.push(['عدد الطلاب الغائبين',filtered.length]);
+    rows.push(['أيام الدراسة',days.length]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:5},{wch:40},{wch:16},{wch:10},{wch:10},{wch:60}];
+    XLSX.utils.book_append_sheet(wb,ws,label.slice(0,31));
+  }
+  XLSX.writeFile(wb,`أرشيف_الغياب_${[...selectedMonths].map(k=>{const[y,m]=k.split('_');return`${MONTHS_AR[+m-1]}_${y}`;}).join('_')}.xlsx`);
+  showT('تم تصدير Excel ✅');
+};
+
+function showT(msg){
+  const t=document.getElementById('tst');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// Init
+function init(){
+  const now=new Date();
+  const yrSel=document.getElementById('yearSel');
+  for(let y=now.getFullYear();y>=now.getFullYear()-2;y--){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y;
+    yrSel.appendChild(o);
+  }
+  buildMonthGrid();
+}
+init();
+
+// expose to window
+window.buildMonthGrid=window.buildMonthGrid;
+window.loadArchive=window.loadArchive;
+window.clearSelection=window.clearSelection;
+window.applyFilter=window.applyFilter;
+window.exportExcel=window.exportExcel;
+</script>
+</body>
+</html>
