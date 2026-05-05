@@ -18,7 +18,9 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .sd{width:8px;height:8px;border-radius:50%;background:#ccc;}
 .sd.synced{background:#2a9d8f;box-shadow:0 0 0 3px rgba(42,157,143,.2);}
 .sd.syncing{background:#f4a261;animation:bl 1s infinite;}
+.sd.live{background:#2a9d8f;box-shadow:0 0 0 3px rgba(42,157,143,.2);animation:pulse 2s infinite;}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(42,157,143,.2)}50%{box-shadow:0 0 0 6px rgba(42,157,143,.05)}}
 .btn{padding:7px 14px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
 .b-blue{background:#0f3460;color:#fff;}
 .b-green{background:#1b5e20;color:#fff;}
@@ -35,7 +37,6 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .sc-up{background:linear-gradient(135deg,#e8f5e9,#a5d6a7);color:#1b4332;}
 .stat-n{font-size:1.8rem;font-weight:900;line-height:1;}
 .stat-l{font-size:.68rem;font-weight:700;opacity:.75;margin-top:3px;}
-/* Send All Banner */
 .send-banner{background:linear-gradient(90deg,#1b5e20,#2e7d32);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;}
 .send-banner .sb-text{flex:1;font-size:.85rem;font-weight:700;}
 .send-banner .sb-count{font-size:1.4rem;font-weight:900;color:#a5d6a7;}
@@ -68,6 +69,9 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .xb-sms{background:#0f3460;color:#fff;}
 .xb-wa{background:#25d366;color:#fff;}
 .xb-edit{background:#f0f0f0;color:#555;}
+/* Live indicator badge */
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(42,157,143,.12);color:#2a9d8f;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#2a9d8f;animation:pulse 1.5s infinite;}
 /* Modals */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
 .ov.hidden{display:none;}
@@ -80,7 +84,6 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .sh-foot button{flex:1;border:none;border-radius:10px;padding:11px;font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:900;cursor:pointer;}
 .f-wa{background:#25d366;color:#fff;}
 .f-sms{background:#0f3460;color:#fff;}
-/* Send list items */
 .sa-item{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0;}
 .sa-item:last-child{border-bottom:none;}
 .sa-name{flex:1;font-size:.8rem;font-weight:700;}
@@ -89,7 +92,6 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .sa-noph{font-size:.7rem;color:#e65100;}
 .sa-wa{background:#25d366;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
 .sa-sms{background:#0f3460;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
-/* Phone manager */
 .pm-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;}
 .pm-ov.hidden{display:none;}
 .pm-box{background:#fff;border-radius:18px;width:100%;max-width:500px;max-height:88vh;display:flex;flex-direction:column;}
@@ -102,7 +104,6 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .pm-inp{width:130px;padding:5px 7px;border:1.5px solid #ddd;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:.75rem;direction:ltr;outline:none;}
 .pm-inp:focus{border-color:#0f3460;}
 .pm-sv{background:#0f3460;color:#fff;border:none;border-radius:8px;padding:5px 11px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;}
-/* Edit modal */
 .ed-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
 .ed-ov.hidden{display:none;}
 .ed-box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:310px;}
@@ -116,6 +117,9 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 .ed-cancel{background:#f0f0f0;color:#555;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:#1a1a2e;color:#fff;padding:9px 20px;border-radius:22px;font-size:.83rem;font-weight:600;z-index:9999;transition:transform .25s;pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+/* Sync flash animation */
+@keyframes syncFlash{0%{background:rgba(42,157,143,.15)}100%{background:transparent}}
+.sync-flash{animation:syncFlash .8s ease-out;}
 </style>
 </head>
 <body>
@@ -125,19 +129,20 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
     <h1>📊 لوحة الغياب – المسؤول</h1>
     <p>متابعة غياب المرحلة الدنيا والعليا</p>
   </div>
-  <div class="hd" id="hDate">...</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+    <div class="hd" id="hDate">...</div>
+    <div class="live-badge" id="liveBadge" style="display:none;"><div class="live-dot"></div>مباشر</div>
+  </div>
 </header>
 
 <div class="top-bar">
   <div class="status"><div class="sd syncing" id="sDot"></div><span id="sTxt">جارٍ التحميل...</span></div>
-  <button class="btn b-blue" onclick="loadAll()">🔄 تحديث</button>
   <button class="btn b-green" onclick="exportTodayExcel()">📥 اليوم</button>
   <button class="btn b-purple" onclick="exportWeekExcel()">📅 الأسبوع</button>
   <button class="btn b-orange" onclick="openPM()">📱 الأرقام</button>
 </div>
 
 <div class="main">
-  <!-- Stats -->
   <div class="day-summary">
     <h2>📈 إجمالي اليوم</h2>
     <div class="stats-row">
@@ -147,7 +152,6 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
     </div>
   </div>
 
-  <!-- Send All Banner -->
   <div class="send-banner" id="sendBanner" style="display:none;">
     <div class="sb-text">📣 <span id="sbCount" class="sb-count">0</span> طالب غائب — أرسل إشعاراً لجميع أولياء الأمور</div>
     <button class="btn b-wa" onclick="openSendAll()">🟢 إرسال للجميع</button>
@@ -209,9 +213,13 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getDatabase,ref,get,set,onValue}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import{getDatabase,ref,get,set,onValue,off}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const app=initializeApp({apiKey:"key",databaseURL:"https://school-attendance-24215-default-rtdb.firebaseio.com",projectId:"school-attendance-24215"});
+const app=initializeApp({
+  apiKey:"AIzaSyExample",
+  databaseURL:"https://school-attendance-24215-default-rtdb.firebaseio.com",
+  projectId:"school-attendance-24215"
+});
 const db=getDatabase(app);
 
 // ===== أرقام الجوالات من PDF =====
@@ -223,26 +231,89 @@ const SML=[
   {id:'s3',name:'الثالث',cls:['الصف الثالث / 1','الصف الثالث / 2','الصف الثالث / 3','الصف الثالث / 4']}
 ];
 const SMU=[
-  {id:'s4',name:'الرابع',cls:['الصف الرابع / 1','الصف الرابع / 2','الصف الرابع / 3','الصف الرابع / 4','الصف الرابع / 5']},
+  {id:'s4',name:'الرابع',cls:['الصف الرابع / 1','الصف الرابع / 2','الصف الرابع / 3','الصف الرابع / 4']},
   {id:'s5',name:'الخامس',cls:['الصف الخامس / 1','الصف الخامس / 2','الصف الخامس / 3','الصف الخامس / 4']},
   {id:'s6',name:'السادس',cls:['الصف السادس / 1','الصف السادس / 2','الصف السادس / 3','الصف السادس / 4']}
 ];
 const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
 const HM=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
 
-let wOff=0,dIdx=0,wDays=[],aData={},STL={},STU={};
+let wOff=0,dIdx=0,wDays=[],STL={},STU={};
 let ov={};
-
-// قائمة الغائبين الحالية
 let absentToday=[];
 
-// تحميل التعديلات من Firebase ومزامنتها
+// ============================================================
+// ✅ المزامنة الفورية — المستمعون النشطون
+// ============================================================
+// نخزن مراجع المستمعين لإلغائها عند تغيير اليوم/الأسبوع
+let activeListeners=[];
+
+function clearListeners(){
+  activeListeners.forEach(({r,fn})=>off(r,'value',fn));
+  activeListeners=[];
+}
+
+// 1) مزامنة أرقام الجوال — دائماً نشطة
 const ovRef=ref(db,'phone_overrides');
-onValue(ovRef,(snap)=>{
+const ovFn=onValue(ovRef,(snap)=>{
+  const prev=JSON.stringify(ov);
   ov=snap.exists()?snap.val():{};
-  if(wDays.length)renderDay(dIdx);
+  if(JSON.stringify(ov)!==prev && wDays.length){
+    renderDay(dIdx);
+    showT('📱 تم تحديث الأرقام من جهاز آخر');
+  }
 });
 
+// 2) مزامنة بيانات الطلاب
+const stlRef=ref(db,'lower_students_v1');
+onValue(stlRef,(snap)=>{
+  if(snap.exists()){STL=snap.val();if(wDays.length)renderDay(dIdx);}
+});
+const stuRef=ref(db,'upper_students_v1');
+onValue(stuRef,(snap)=>{
+  if(snap.exists()){STU=snap.val();if(wDays.length)renderDay(dIdx);}
+});
+
+// 3) مزامنة بيانات الغياب لليوم المحدد فورياً
+let dayData={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
+
+function listenToDay(date){
+  clearListeners();
+  const key=dk(date);
+
+  // المسارات الأربعة للغياب
+  const paths=[
+    {r:ref(db,`lower_d_${key}`),       target:'lower', sub:'ATT'},
+    {r:ref(db,`upper_d_${key}`),       target:'upper', sub:'ATT'},
+    {r:ref(db,`lower_no_absent_${key}`),target:'lower', sub:'noA'},
+    {r:ref(db,`upper_no_absent_${key}`),target:'upper', sub:'noA'},
+  ];
+
+  paths.forEach(({r:dbRef,target,sub})=>{
+    const fn=onValue(dbRef,(snap)=>{
+      dayData[target][sub]=snap.exists()?snap.val():{};
+      if(wDays.length){
+        renderDay(dIdx);
+        // وميض خفيف يدل على تحديث مباشر
+        flashSync();
+      }
+    });
+    activeListeners.push({r:dbRef,fn});
+  });
+
+  // أظهر مؤشر "مباشر"
+  document.getElementById('liveBadge').style.display='inline-flex';
+  setSUI('live','مباشر 🟢');
+}
+
+function flashSync(){
+  const sec=document.getElementById('sections');
+  sec.classList.remove('sync-flash');
+  void sec.offsetWidth; // reflow
+  sec.classList.add('sync-flash');
+}
+
+// ============================================================
 function gph(gid,ci,idx){
   const ok=ov[`${gid}_${ci}_${idx}`];
   if(ok)return ok;
@@ -268,7 +339,6 @@ function toH(dt){
 }
 function dlbl(dt){const h=toH(dt);return`${DN[dt.getDay()]} ${h.d} ${HM[h.m-1]} ${h.y}هـ`;}
 function buildMsg(name,dt){return`السلام عليكم،\nابنكم *${name}* غائب اليوم\n📅 ${dlbl(dt)}\n\nمدرسة عمورية الابتدائية`;}
-
 function dk(d){return`${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;}
 function gwd(off){
   const now=new Date(),sun=new Date(now);
@@ -277,27 +347,6 @@ function gwd(off){
 }
 function setSUI(s,m){document.getElementById('sDot').className='sd '+s;document.getElementById('sTxt').textContent=m;}
 
-async function loadStudents(){
-  try{
-    const[l,u]=await Promise.all([get(ref(db,'lower_students_v1')),get(ref(db,'upper_students_v1'))]);
-    if(l.exists())STL=l.val();if(u.exists())STU=u.val();
-  }catch(e){}
-}
-async function loadDay(date){
-  const key=dk(date);
-  if(aData[key])return aData[key];
-  try{
-    const[ls,us,ln,un]=await Promise.all([
-      get(ref(db,`lower_d_${key}`)),get(ref(db,`upper_d_${key}`)),
-      get(ref(db,`lower_no_absent_${key}`)),get(ref(db,`upper_no_absent_${key}`))
-    ]);
-    aData[key]={
-      lower:{ATT:ls.exists()?ls.val():{},noA:ln.exists()?ln.val():{}},
-      upper:{ATT:us.exists()?us.val():{},noA:un.exists()?un.val():{}}
-    };
-  }catch(e){aData[key]={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};}
-  return aData[key];
-}
 function getAbs(ST,ATT,sm){
   const r={};
   sm.forEach(sg=>{
@@ -315,12 +364,11 @@ window.loadAll=async function(){
   setSUI('syncing','جارٍ التحميل...');
   wDays=gwd(wOff);
   const tk=dk(new Date());
-  await loadStudents();
-  for(const d of wDays)await loadDay(d);
   const ti=wDays.findIndex(d=>dk(d)===tk);
   if(wOff===0&&ti>=0)dIdx=ti; else if(dIdx>=wDays.length)dIdx=0;
-  setSUI('synced','محدّث ✅');
-  rwn();rdt();renderDay(dIdx);rh();
+  // بدء الاستماع الفوري لليوم المحدد
+  listenToDay(wDays[dIdx]);
+  rwn();rdt();rh();
 };
 
 function rh(){const now=new Date(),h=toH(now);document.getElementById('hDate').textContent=`${DN[now.getDay()]} ${h.d} ${HM[h.m-1]} ${h.y}هـ`;}
@@ -338,16 +386,21 @@ function rdt(){
     const b=document.createElement('button');
     b.className=`day-tab${i===dIdx?' active':''}`;
     b.textContent=`${DN[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
-    b.onclick=()=>{dIdx=i;rdt();renderDay(i);};
+    b.onclick=()=>{
+      dIdx=i;
+      // عند تغيير اليوم → استمع لليوم الجديد فوراً
+      dayData={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
+      listenToDay(wDays[dIdx]);
+      rdt();
+    };
     t.appendChild(b);
   });
 }
 
 function renderDay(idx){
   const date=wDays[idx];
-  const data=aData[dk(date)]||{lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
-  const lA=getAbs(STL,data.lower.ATT,SML);
-  const uA=getAbs(STU,data.upper.ATT,SMU);
+  const lA=getAbs(STL,dayData.lower.ATT,SML);
+  const uA=getAbs(STU,dayData.upper.ATT,SMU);
   let tl=0,tu=0;
   absentToday=[];
 
@@ -372,7 +425,7 @@ function renderDay(idx){
 
   const cont=document.getElementById('sections');cont.innerHTML='';
 
-  function buildSec(sm,aMap,secData,isL){
+  function buildSec(sm,aMap,noAData,isL){
     const card=document.createElement('div');card.className='sec-card';
     const tot=isL?tl:tu;
     const lbl=isL?'المرحلة الدنيا (1-3)':'المرحلة العليا (4-6)';
@@ -382,7 +435,7 @@ function renderDay(idx){
       b+=`<div class="cls-block">`;
       sg.cls.forEach((cls,ci)=>{
         const k=`c${ci}`,info=aMap[sg.id].cls[k];
-        const noAbs=secData.noA&&secData.noA[sg.id]&&secData.noA[sg.id][k];
+        const noAbs=noAData&&noAData[sg.id]&&noAData[sg.id][k];
         b+=`<div class="cls-title">${cls}<span>غياب: ${info.sts.length}</span></div>`;
         if(noAbs){
           b+=`<div class="confirmed-ok">✅ لا يوجد غياب (مؤكد)</div>`;
@@ -392,7 +445,6 @@ function renderDay(idx){
           info.sts.forEach((s,i)=>{
             const ph=gph(sg.id,ci,s._i);
             const ptag=ph?`<span class="ph-tag ph-ok">📱 ${ph}</span>`:`<span class="ph-tag ph-no">لا يوجد رقم</span>`;
-            // كل زر يحمل بياناته كـ data attributes - لا inline JS
             const wa=ph?`<button class="xb xb-wa" data-ph="${ph}" data-name="${s.name.replace(/"/g,'&quot;')}" data-act="wa">🟢 WA</button>`:'';
             const sms=ph?`<button class="xb xb-sms" data-ph="${ph}" data-name="${s.name.replace(/"/g,'&quot;')}" data-act="sms">💬 SMS</button>`:'';
             const ed=`<button class="xb xb-edit" data-gid="${sg.id}" data-ci="${ci}" data-idx="${s._i}" data-name="${s.name.replace(/"/g,'&quot;')}" data-ph="${ph||''}" data-act="edit">✏️</button>`;
@@ -403,8 +455,6 @@ function renderDay(idx){
       b+=`</div>`;
     });
     card.innerHTML=`<div class="sec-head ${hc}">📚 ${lbl}<span>غياب: ${tot}</span></div><div class="sec-body">${b}</div>`;
-
-    // ربط الأحداث بعد إنشاء DOM
     card.querySelectorAll('[data-act]').forEach(btn=>{
       btn.addEventListener('click',()=>{
         const act=btn.dataset.act;
@@ -422,11 +472,17 @@ function renderDay(idx){
     cont.appendChild(card);
   }
 
-  buildSec(SML,lA,data.lower,true);
-  buildSec(SMU,uA,data.upper,false);
+  buildSec(SML,lA,dayData.lower.noA,true);
+  buildSec(SMU,uA,dayData.upper.noA,false);
 }
 
-window.changeWeek=function(d){wOff+=d;dIdx=0;aData={};loadAll();};
+window.changeWeek=function(d){
+  wOff+=d;dIdx=0;
+  dayData={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
+  wDays=gwd(wOff);
+  listenToDay(wDays[dIdx]);
+  rwn();rdt();rh();
+};
 
 // ===== Send All =====
 window.openSendAll=function(){
@@ -451,7 +507,6 @@ window.openSendAll=function(){
   }));
 };
 
-// إرسال للجميع — واحداً تلو الآخر بزر "التالي"
 let bulkList=[],bulkIdx=0,bulkType='wa';
 window.bulkSend=function(type){
   const list=absentToday.filter(s=>s.phone);
@@ -465,10 +520,8 @@ function showBulkStep(){
   const s=bulkList[bulkIdx];
   const msg=buildMsg(s.name,s.date);
   const url=bulkType==='wa'?`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`:`sms:${s.phone}?body=${encodeURIComponent(msg)}`;
-  // افتح الرسالة
   location.href=url;
   bulkIdx++;
-  // أظهر نافذة "التالي"
   showBulkNav();
 }
 function showBulkNav(){
@@ -485,7 +538,6 @@ function showBulkNav(){
   document.body.appendChild(div);
 }
 
-// ===== Edit Phone =====
 let edT=null;
 function openEd(gid,ci,idx,name,ph){
   edT={gid,ci,idx};
@@ -498,10 +550,9 @@ window.saveEd=async function(){
   if(!edT)return;
   await sph(edT.gid,edT.ci,edT.idx,document.getElementById('edVal').value);
   document.getElementById('edModal').classList.add('hidden');
-  edT=null;showT('تم الحفظ ✅ (مزامنة Firebase)');
+  edT=null;showT('تم الحفظ ✅ (مزامنة فورية)');
 };
 
-// ===== Phone Manager =====
 window.openPM=function(){
   document.getElementById('pmModal').classList.remove('hidden');
   document.getElementById('pmQ').value='';renderPM();
@@ -528,17 +579,15 @@ window.renderPM=function(){
 };
 window.savePM=async function(gid,ci,idx){
   const el=document.getElementById(`pi_${gid}_${ci}_${idx}`);
-  if(el){await sph(gid,ci,idx,el.value);showT('تم ✅ (مزامنة Firebase)');}
+  if(el){await sph(gid,ci,idx,el.value);showT('تم ✅ (مزامنة فورية)');}
 };
 
-// ===== Excel =====
 window.exportTodayExcel=function(){
   const date=wDays[dIdx];
-  const data=aData[dk(date)]||{lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};
   const wb=XLSX.utils.book_new();
   [...SML,...SMU].forEach(sg=>{
     const isL=!!SML.find(s=>s.id===sg.id);
-    const ST=isL?STL:STU,ATT=isL?data.lower.ATT:data.upper.ATT,noA=isL?data.lower.noA:data.upper.noA;
+    const ST=isL?STL:STU,ATT=isL?dayData.lower.ATT:dayData.upper.ATT,noA=isL?dayData.lower.noA:dayData.upper.noA;
     sg.cls.forEach((cls,ci)=>{
       const k=`c${ci}`,sts=ST[sg.id]?ST[sg.id][k]||[]:[];
       const att=ATT[sg.id]?ATT[sg.id][k]||{}:{};
@@ -556,9 +605,25 @@ window.exportTodayExcel=function(){
   XLSX.writeFile(wb,`غياب_${DN[date.getDay()]}_${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}.xlsx`);
   showT('تم تصدير Excel ✅');
 };
+
 window.exportWeekExcel=async function(){
   showT('جارٍ تجهيز الأسبوع...');
-  for(const d of wDays)await loadDay(d);
+  // جلب بيانات باقي الأيام بـ get عادي (ليست اليوم الحالي)
+  const allData={};
+  for(const d of wDays){
+    const key=dk(d);
+    if(key===dk(wDays[dIdx])){allData[key]=dayData;continue;}
+    try{
+      const[ls,us,ln,un]=await Promise.all([
+        get(ref(db,`lower_d_${key}`)),get(ref(db,`upper_d_${key}`)),
+        get(ref(db,`lower_no_absent_${key}`)),get(ref(db,`upper_no_absent_${key}`))
+      ]);
+      allData[key]={
+        lower:{ATT:ls.exists()?ls.val():{},noA:ln.exists()?ln.val():{}},
+        upper:{ATT:us.exists()?us.val():{},noA:un.exists()?un.val():{}}
+      };
+    }catch(e){allData[key]={lower:{ATT:{},noA:{}},upper:{ATT:{},noA:{}}};}
+  }
   const wb=XLSX.utils.book_new();
   [...SML,...SMU].forEach(sg=>{
     sg.cls.forEach((cls,ci)=>{
@@ -570,7 +635,7 @@ window.exportWeekExcel=async function(){
         const row=[idx+1,s.name,gph(sg.id,ci,idx)||'—'];
         let tot=0;
         wDays.forEach(d=>{
-          const dd=aData[dk(d)]||{lower:{ATT:{}},upper:{ATT:{}}};
+          const dd=allData[dk(d)]||{lower:{ATT:{}},upper:{ATT:{}}};
           const att=(isL?dd.lower.ATT:dd.upper.ATT);
           const a=att[sg.id]?att[sg.id][`c${ci}`]||{}:{};
           const ab=a[s.id]===true;if(ab)tot++;
@@ -593,8 +658,9 @@ function showT(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3500);
 }
+
+// بدء التشغيل
 loadAll();
-setInterval(()=>{aData={};loadAll();},5*60*1000);
 </script>
 </body>
 </html>
