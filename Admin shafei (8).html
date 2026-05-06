@@ -120,6 +120,34 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
 /* Sync flash animation */
 @keyframes syncFlash{0%{background:rgba(42,157,143,.15)}100%{background:transparent}}
 .sync-flash{animation:syncFlash .8s ease-out;}
+/* VCF Modal */
+.vcf-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:flex;align-items:flex-end;justify-content:center;}
+.vcf-ov.hidden{display:none;}
+.vcf-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;}
+.vcf-head{padding:16px;background:linear-gradient(120deg,#1b5e20,#2e7d32);color:#fff;display:flex;justify-content:space-between;align-items:center;border-radius:22px 22px 0 0;}
+.vcf-head h3{font-size:1rem;font-weight:900;}
+.vcf-body{padding:14px;overflow-y:auto;flex:1;}
+.vcf-info{background:#e8f5e9;border-radius:12px;padding:12px;margin-bottom:14px;font-size:.82rem;line-height:1.7;color:#1b4332;}
+.vcf-info strong{font-size:.9rem;color:#1b5e20;}
+.vcf-stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.vcf-stat{flex:1;min-width:80px;background:#f5f5f5;border-radius:10px;padding:10px;text-align:center;}
+.vcf-stat .vn{font-size:1.5rem;font-weight:900;color:#0f3460;}
+.vcf-stat .vl{font-size:.68rem;color:#888;font-weight:700;}
+.vcf-files{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.vcf-file{background:#f9f9f9;border:1.5px solid #e0e0e0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+.vcf-file-info{flex:1;}
+.vcf-file-name{font-size:.82rem;font-weight:800;color:#1a1a2e;}
+.vcf-file-count{font-size:.72rem;color:#888;margin-top:2px;}
+.vcf-dl{background:#25d366;color:#fff;border:none;border-radius:9px;padding:7px 14px;font-family:'Tajawal',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;}
+.vcf-msg-box{background:#fff3e0;border-radius:12px;padding:12px;margin-bottom:12px;}
+.vcf-msg-box p{font-size:.78rem;color:#e65100;font-weight:700;margin-bottom:6px;}
+.vcf-msg-text{font-size:.8rem;color:#333;line-height:1.6;background:#fff;border-radius:8px;padding:9px;border:1px solid #ffe0b2;}
+.vcf-copy{width:100%;background:#e65100;color:#fff;border:none;border-radius:9px;padding:9px;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:900;cursor:pointer;margin-top:8px;}
+.vcf-steps{background:#e3f2fd;border-radius:12px;padding:12px;}
+.vcf-steps p{font-size:.8rem;font-weight:800;color:#1565c0;margin-bottom:6px;}
+.vcf-steps ol{padding-right:18px;}
+.vcf-steps li{font-size:.78rem;color:#333;margin-bottom:4px;line-height:1.5;}
+.vcf-steps li strong{color:#1565c0;}
 </style>
 </head>
 <body>
@@ -140,6 +168,7 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
   <button class="btn b-green" onclick="exportTodayExcel()">📥 اليوم</button>
   <button class="btn b-purple" onclick="exportWeekExcel()">📅 الأسبوع</button>
   <button class="btn b-orange" onclick="openPM()">📱 الأرقام</button>
+  <button class="btn b-wa" onclick="openVCF()">📇 VCF واتساب</button>
 </div>
 
 <div class="main">
@@ -205,6 +234,41 @@ header p{color:#a8c4e0;font-size:.78rem;margin-top:3px;}
     <div class="ed-btns">
       <button class="ed-save" onclick="saveEd()">💾 حفظ</button>
       <button class="ed-cancel" onclick="document.getElementById('edModal').classList.add('hidden')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- VCF Modal -->
+<div class="vcf-ov hidden" id="vcfModal">
+  <div class="vcf-sheet">
+    <div class="vcf-head">
+      <h3>📇 تصدير VCF للواتساب</h3>
+      <button class="x-btn" onclick="document.getElementById('vcfModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="vcf-body">
+      <div class="vcf-info">
+        <strong>📋 كيف تعمل؟</strong><br>
+        يُنشئ هذا الزر ملف جهات اتصال <b>VCF</b> لأولياء أمور الغائبين فقط.<br>
+        بعد التنزيل → افتح الملف على الجوال → أضف الأرقام → افتح <b>WhatsApp Business</b> → قائمة بث جديدة → اختر الجميع → الصق الرسالة → أرسل 🚀
+      </div>
+      <div class="vcf-stats" id="vcfStats"></div>
+      <div class="vcf-msg-box">
+        <p>📝 نص رسالة الغياب (انسخه بعد إضافة الأرقام):</p>
+        <div class="vcf-msg-text" id="vcfMsgPreview"></div>
+        <button class="vcf-copy" onclick="copyVcfMsg()">📋 نسخ الرسالة</button>
+      </div>
+      <div class="vcf-files" id="vcfFilesList"></div>
+      <div class="vcf-steps">
+        <p>📌 خطوات الإرسال عبر WhatsApp Business:</p>
+        <ol>
+          <li>نزّل ملف (أو ملفات) VCF أدناه</li>
+          <li>افتح الملف من التنزيلات ← <strong>أضف الجهات للجوال</strong></li>
+          <li>افتح <strong>WhatsApp Business</strong></li>
+          <li>اضغط ⋮ ← <strong>قائمة بث جديدة</strong></li>
+          <li>اختر الجهات التي أضفتها للتو</li>
+          <li>اضغط <strong>نسخ الرسالة</strong> أعلاه ← الصقها ← أرسل 🚀</li>
+        </ol>
+      </div>
     </div>
   </div>
 </div>
@@ -651,6 +715,120 @@ window.exportWeekExcel=async function(){
   const[f,l]=[wDays[0],wDays[4]];
   XLSX.writeFile(wb,`غياب_أسبوعي_${f.getDate()}-${f.getMonth()+1}_إلى_${l.getDate()}-${l.getMonth()+1}.xlsx`);
   showT('تم تصدير الأسبوع ✅');
+};
+
+// ===== VCF Export =====
+const VCF_LIMIT = 256; // حد واتساب لكل ملف
+
+function buildVcfContent(contacts) {
+  return contacts.map((c, i) => {
+    const name = c.name.replace(/;/g, ' ').replace(/:/g, ' ');
+    const phone = c.phone.startsWith('+') ? c.phone : `+${c.phone}`;
+    return `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nN:${name};;;\nTEL;TYPE=CELL:${phone}\nEND:VCARD`;
+  }).join('\n');
+}
+
+function downloadVcf(content, filename) {
+  const blob = new Blob([content], {type: 'text/vcard;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+window.openVCF = function() {
+  // جمع الغائبين الذين عندهم أرقام صالحة (أكثر من 8 أرقام)
+  const contacts = absentToday.filter(s => {
+    if (!s.phone) return false;
+    const digits = s.phone.replace(/\D/g, '');
+    return digits.length > 8;
+  }).map(s => ({name: s.name, phone: s.phone, cls: s.cls}));
+
+  const total = contacts.length;
+  const noPhone = absentToday.length - total;
+  const filesCount = Math.ceil(total / VCF_LIMIT);
+  const date = wDays[dIdx];
+
+  // إحصائيات
+  document.getElementById('vcfStats').innerHTML = `
+    <div class="vcf-stat"><div class="vn">${absentToday.length}</div><div class="vl">إجمالي الغائبين</div></div>
+    <div class="vcf-stat"><div class="vn" style="color:#25d366">${total}</div><div class="vl">لديهم أرقام</div></div>
+    <div class="vcf-stat"><div class="vn" style="color:#e65100">${noPhone}</div><div class="vl">بدون رقم</div></div>
+    <div class="vcf-stat"><div class="vn" style="color:#4a0080">${filesCount}</div><div class="vl">ملف VCF</div></div>
+  `;
+
+  // نص الرسالة
+  const dateStr = dlbl(date);
+  const msgText = `السلام عليكم ورحمة الله وبركاته\nنُحيطكم علماً بأن ابنكم الطالب غائب اليوم\n📅 ${dateStr}\nنرجو التواصل مع إدارة المدرسة.\n\nمدرسة عمورية الابتدائية 🏫`;
+  document.getElementById('vcfMsgPreview').innerText = msgText;
+  window._vcfMsg = msgText;
+
+  // قائمة الملفات
+  let filesHtml = '';
+  if (total === 0) {
+    filesHtml = '<div style="text-align:center;color:#aaa;padding:20px;font-size:.85rem">لا يوجد أرقام مسجلة للغائبين اليوم</div>';
+  } else if (filesCount === 1) {
+    filesHtml = `<div class="vcf-file">
+      <div class="vcf-file-info">
+        <div class="vcf-file-name">📇 غياب_${date.getDate()}-${date.getMonth()+1}.vcf</div>
+        <div class="vcf-file-count">${total} جهة اتصال</div>
+      </div>
+      <button class="vcf-dl" onclick="downloadVcfPart(0)">⬇️ تنزيل</button>
+    </div>`;
+  } else {
+    for (let i = 0; i < filesCount; i++) {
+      const from = i * VCF_LIMIT + 1;
+      const to = Math.min((i + 1) * VCF_LIMIT, total);
+      filesHtml += `<div class="vcf-file">
+        <div class="vcf-file-info">
+          <div class="vcf-file-name">📇 غياب_جزء${i+1}_${date.getDate()}-${date.getMonth()+1}.vcf</div>
+          <div class="vcf-file-count">${from} – ${to} (${to - from + 1} جهة)</div>
+        </div>
+        <button class="vcf-dl" onclick="downloadVcfPart(${i})">⬇️ تنزيل</button>
+      </div>`;
+    }
+    filesHtml += `<button style="width:100%;background:#0f3460;color:#fff;border:none;border-radius:10px;padding:10px;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:900;cursor:pointer;margin-top:4px;" onclick="downloadAllVcf()">⬇️ تنزيل جميع الملفات (${filesCount})</button>`;
+  }
+  document.getElementById('vcfFilesList').innerHTML = filesHtml;
+  window._vcfContacts = contacts;
+  window._vcfDate = date;
+
+  document.getElementById('vcfModal').classList.remove('hidden');
+};
+
+window.downloadVcfPart = function(partIdx) {
+  const contacts = window._vcfContacts || [];
+  const date = window._vcfDate || wDays[dIdx];
+  const chunk = contacts.slice(partIdx * VCF_LIMIT, (partIdx + 1) * VCF_LIMIT);
+  const content = buildVcfContent(chunk);
+  const suffix = Math.ceil(contacts.length / VCF_LIMIT) > 1 ? `_جزء${partIdx + 1}` : '';
+  downloadVcf(content, `غياب${suffix}_${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}.vcf`);
+  showT(`✅ تم تنزيل الجزء ${partIdx + 1} (${chunk.length} جهة)`);
+};
+
+window.downloadAllVcf = function() {
+  const contacts = window._vcfContacts || [];
+  const date = window._vcfDate || wDays[dIdx];
+  const filesCount = Math.ceil(contacts.length / VCF_LIMIT);
+  for (let i = 0; i < filesCount; i++) {
+    setTimeout(() => downloadVcfPart(i), i * 600);
+  }
+  showT(`⬇️ جارٍ تنزيل ${filesCount} ملفات...`);
+};
+
+window.copyVcfMsg = function() {
+  const msg = window._vcfMsg || '';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(() => showT('✅ تم نسخ الرسالة!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = msg; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showT('✅ تم نسخ الرسالة!');
+  }
 };
 
 function showT(msg){
