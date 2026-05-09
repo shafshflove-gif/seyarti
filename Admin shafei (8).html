@@ -724,18 +724,33 @@ function buildVcfContent(contacts) {
   return contacts.map((c, i) => {
     const name = c.name.replace(/;/g, ' ').replace(/:/g, ' ');
     const phone = c.phone.startsWith('+') ? c.phone : `+${c.phone}`;
-    return `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nN:${name};;;\nTEL;TYPE=CELL:${phone}\nEND:VCARD`;
+    return `BEGIN:VCARD\nVERSION:3.0\nFN:🔔غياب | ${name}\nN:🔔غياب | ${name};;;\nTEL;TYPE=CELL:${phone}\nEND:VCARD`;
   }).join('\n');
 }
 
-function downloadVcf(content, filename) {
-  const blob = new Blob([content], {type: 'text/vcard;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
+async function shareVCF(vcfText, filename) {
+  const file = new File([vcfText], filename, {type: 'text/vcard'});
+  // لو الجوال يدعم مشاركة الملفات (أغلب الجوالات الحديثة)
+  if (navigator.canShare && navigator.canShare({files: [file]})) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'جهات اتصال أولياء أمور الغائبين',
+      });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // المستخدم ألغى
+    }
+  }
+  // خطة بديلة للمتصفحات القديمة: تحميل عادي
+  const url = URL.createObjectURL(file);
   const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+// للتوافق مع الكود القديم
+function downloadVcf(content, filename) {
+  shareVCF(content, filename);
 }
 
 window.openVCF = function() {
